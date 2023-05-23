@@ -17,9 +17,9 @@ public class SampleController {
   private static String somearray(int index) {
     List<String> people = new ArrayList<>();
 
-    people.add("Mike");
-    people.add("Adam");
-    people.add("Craig");
+    people.add("Mike Chang");
+    people.add("Adam Lambert");
+    people.add("Craig Groeschel");
 
     System.out.println(people.toString());
     return people.get(index).toString();
