@@ -15,6 +15,7 @@ import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
 
 import java.util.Optional;
+import java.util.List;
 
 @Service
 public class UserServiceImpl implements UserService {
@@ -29,32 +30,32 @@ public class UserServiceImpl implements UserService {
     private BCryptPasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
-    
+
     @Override
-    public MappingJacksonValue login(String username, String password){
+    public MappingJacksonValue login(String username, String password) {
         Optional<UserEntity> CheckUser = getUserById(username);
-         
+
         JWTJsonData json = new JWTJsonData();
-        json.setResult("false"); 
-        
-        if (CheckUser.isPresent()){
+        json.setResult("false");
+
+        if (CheckUser.isPresent()) {
             UserEntity ThisUser = CheckUser.get();
             String HashedPassword = ThisUser.getPassword();
 
             int UserActive = ThisUser.getActiveStatus();
-            if (passwordEncoder().matches(password, HashedPassword) && UserActive == 1){
+            if (passwordEncoder().matches(password, HashedPassword) && UserActive == 1) {
                 Algorithm algorithm = Algorithm.HMAC256("secret");
 
                 String jwt = JWT.create()
-                    .withClaim("username", username)
-                    .sign(algorithm);
+                        .withClaim("username", username)
+                        .sign(algorithm);
 
                 json.setResult("true");
                 json.setJwt(jwt);
             }
-        } 
+        }
 
-        MappingJacksonValue mapping = new MappingJacksonValue(json);    
+        MappingJacksonValue mapping = new MappingJacksonValue(json);
         return mapping;
     }
 
@@ -64,57 +65,62 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public MappingJacksonValue updatePwd(String username, String password){
+    public MappingJacksonValue updatePwd(String username, String password) {
         Optional<UserEntity> CheckUser = getUserById(username);
-         
+
         UpdateProfileJsonData json = new UpdateProfileJsonData();
-        json.setResult("false"); 
-        
-        if (CheckUser.isPresent()){
+        json.setResult("false");
+
+        if (CheckUser.isPresent()) {
             UserEntity ThisUser = CheckUser.get();
             // need to write error handlers <start>
             // need to write error handlers <end>
             String hashedPassword = passwordEncoder().encode(password);
             ThisUser.setPassword(hashedPassword);
             userRepository.save(ThisUser);
-            json.setResult("true"); 
+            json.setResult("true");
 
-        } 
-        MappingJacksonValue mapping = new MappingJacksonValue(json);    
+        }
+        MappingJacksonValue mapping = new MappingJacksonValue(json);
         return mapping;
     }
 
     @Override
-    public MappingJacksonValue updateEmail(String username, String email){
+    public MappingJacksonValue updateEmail(String username, String email) {
         Optional<UserEntity> CheckUser = getUserById(username);
-         
+
         UpdateProfileJsonData json = new UpdateProfileJsonData();
-        json.setResult("false"); 
-        
-        if (CheckUser.isPresent()){
+        json.setResult("false");
+
+        if (CheckUser.isPresent()) {
             UserEntity ThisUser = CheckUser.get();
             // need to write error handlers <start>
             // need to write error handlers <end>
             ThisUser.setEmail(email);
             userRepository.save(ThisUser);
-            json.setResult("true"); 
+            json.setResult("true");
 
-        } 
-        MappingJacksonValue mapping = new MappingJacksonValue(json);    
+        }
+        MappingJacksonValue mapping = new MappingJacksonValue(json);
         return mapping;
     }
-  
+
+    @Override
+    public List<UserEntity> getAllUsers() {
+        return userRepository.findAll();
+    }
+
 }
 
 @Getter
 @Setter
-class JWTJsonData{
+class JWTJsonData {
     private String result;
     private String jwt;
 }
 
 @Getter
 @Setter
-class UpdateProfileJsonData{
+class UpdateProfileJsonData {
     private String result;
 }
