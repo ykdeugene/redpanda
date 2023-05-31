@@ -2,6 +2,8 @@ package com.tmsjsb.redpanda.Controller;
 
 import com.tmsjsb.redpanda.Service.UserService;
 import com.tmsjsb.redpanda.Entity.UserEntity;
+import com.tmsjsb.redpanda.Interface.UserOnUpdateEmail;
+import com.tmsjsb.redpanda.Interface.UserOnUpdatePassword;
 
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -13,6 +15,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
+import org.springframework.validation.annotation.Validated;
 
 import java.util.HashMap;
 import java.util.List;
@@ -34,15 +37,17 @@ public class UserController {
     return userService.login(user.getUsername(), user.getPassword());
   }
 
-  @PostMapping("/update/pwd")
-  public MappingJacksonValue updatePwd(@RequestBody UserEntity user) {
-    return userService.updatePwd(user.getUsername(), user.getPassword());
-  }
-
-  @PostMapping("/update/email")
-  public MappingJacksonValue updateEmail(@RequestBody UserEntity user) {
-    return userService.updateEmail(user.getUsername(), user.getEmail());
-  }
+  /*
+   * @PostMapping("/update/pwd")
+   * public MappingJacksonValue updatePwd(@RequestBody UserEntity user) {
+   * return userService.updatePwd(user.getUsername(), user.getPassword());
+   * }
+   * 
+   * @PostMapping("/update/email")
+   * public MappingJacksonValue updateEmail(@RequestBody UserEntity user) {
+   * return userService.updateEmail(user.getUsername(), user.getEmail());
+   * }
+   */
 
   @RequestMapping("/adminget/allprofile")
   public ResponseEntity<List<UserEntity>> getAllUsers() {
@@ -50,6 +55,7 @@ public class UserController {
     return new ResponseEntity<>(users, HttpStatus.OK);
   }
 
+  @Validated(UserOnUpdatePassword.class)
   @PostMapping("/adminupdate/pwd")
   public ResponseEntity<Map<String, Object>> adminUpdateUserPwd(@Valid @RequestBody UserEntity user,
       BindingResult bindingResult) {
@@ -64,16 +70,16 @@ public class UserController {
       System.out.println(errors);
     } else {
       try {
-        userService.updatePwd(user.getUsername(), user.getPassword());
-        jsonObject.put("results", "true");
+        Map<String, Object> result = userService.updatePwd(user.getUsername(), user.getPassword());
+        jsonObject = result;
       } catch (Exception e) {
-        // if
         jsonObject.put("results", "BSJxxx (exception error)");
       }
     }
     return ResponseEntity.ok(jsonObject);
   }
 
+  @Validated(UserOnUpdateEmail.class)
   @PostMapping("/adminupdate/email")
   public ResponseEntity<Map<String, Object>> adminUpdateUserEmail(@Valid @RequestBody UserEntity user,
       BindingResult bindingResult) {
@@ -88,16 +94,13 @@ public class UserController {
       System.out.println(errors);
     } else {
       try {
-        userService.updatePwd(user.getUsername(), user.getEmail());
-
-        jsonObject.put("results", "true");
+        Map<String, Object> result = userService.updateEmail(user.getUsername(), user.getEmail());
+        jsonObject = result;
       } catch (Exception e) {
-        // if
         jsonObject.put("results", "BSJxxx (exception error)");
       }
     }
     return ResponseEntity.ok(jsonObject);
-
   }
 
 }

@@ -15,7 +15,9 @@ import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
 
 import java.util.Optional;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class UserServiceImpl implements UserService {
@@ -65,45 +67,94 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public MappingJacksonValue updatePwd(String username, String password) {
-        Optional<UserEntity> CheckUser = getUserById(username);
+    public Map<String, Object> updatePwd(String username, String password) {
 
-        UpdateProfileJsonData json = new UpdateProfileJsonData();
-        json.setResult("false");
+        Optional<UserEntity> CheckUser = getUserById(username);
+        Map<String, Object> jsonObject = new HashMap<>();
 
         if (CheckUser.isPresent()) {
             UserEntity ThisUser = CheckUser.get();
-            // need to write error handlers <start>
-            // need to write error handlers <end>
-            String hashedPassword = passwordEncoder().encode(password);
-            ThisUser.setPassword(hashedPassword);
-            userRepository.save(ThisUser);
-            json.setResult("true");
-
+            System.out.println("this user: " + ThisUser);
+            try {
+                String hashedPassword = passwordEncoder().encode(password);
+                ThisUser.setPassword(hashedPassword);
+                System.out.println(password);
+                System.out.println(hashedPassword);
+                userRepository.save(ThisUser);
+                // userRepository.save(ThisUser);
+                jsonObject.put("results", "true");
+            } catch (Exception e) {
+                System.out.println(e);
+                jsonObject.put("results", "BSJxxx (error code here) .updatePwd");
+            }
         }
-        MappingJacksonValue mapping = new MappingJacksonValue(json);
-        return mapping;
+        return jsonObject;
+
     }
 
     @Override
-    public MappingJacksonValue updateEmail(String username, String email) {
-        Optional<UserEntity> CheckUser = getUserById(username);
+    public Map<String, Object> updateEmail(String username, String email) {
 
-        UpdateProfileJsonData json = new UpdateProfileJsonData();
-        json.setResult("false");
+        Optional<UserEntity> CheckUser = getUserById(username);
+        Map<String, Object> jsonObject = new HashMap<>();
 
         if (CheckUser.isPresent()) {
             UserEntity ThisUser = CheckUser.get();
-            // need to write error handlers <start>
-            // need to write error handlers <end>
-            ThisUser.setEmail(email);
-            userRepository.save(ThisUser);
-            json.setResult("true");
-
+            try {
+                ThisUser.setEmail(email);
+                userRepository.save(ThisUser);
+                jsonObject.put("results", "true");
+            } catch (Exception e) {
+                jsonObject.put("results", "BSJxxx (error code here)");
+            }
         }
-        MappingJacksonValue mapping = new MappingJacksonValue(json);
-        return mapping;
+        return jsonObject;
     }
+
+    /*
+     * @Override
+     * public MappingJacksonValue updatePwd(String username, String password) {
+     * Optional<UserEntity> CheckUser = getUserById(username);
+     * 
+     * UpdateProfileJsonData json = new UpdateProfileJsonData();
+     * json.setResult("false");
+     * 
+     * if (CheckUser.isPresent()) {
+     * UserEntity ThisUser = CheckUser.get();
+     * // need to write error handlers <start>
+     * // need to write error handlers <end>
+     * String hashedPassword = passwordEncoder().encode(password);
+     * ThisUser.setPassword(hashedPassword);
+     * userRepository.save(ThisUser);
+     * json.setResult("true");
+     * 
+     * }
+     * MappingJacksonValue mapping = new MappingJacksonValue(json);
+     * return mapping;
+     * }
+     */
+
+    /*
+     * @Override
+     * public MappingJacksonValue updateEmail(String username, String email) {
+     * Optional<UserEntity> CheckUser = getUserById(username);
+     * 
+     * UpdateProfileJsonData json = new UpdateProfileJsonData();
+     * json.setResult("false");
+     * 
+     * if (CheckUser.isPresent()) {
+     * UserEntity ThisUser = CheckUser.get();
+     * // need to write error handlers <start>
+     * // need to write error handlers <end>
+     * ThisUser.setEmail(email);
+     * userRepository.save(ThisUser);
+     * json.setResult("true");
+     * 
+     * }
+     * MappingJacksonValue mapping = new MappingJacksonValue(json);
+     * return mapping;
+     * }
+     */
 
     @Override
     public List<UserEntity> getAllUsers() {
