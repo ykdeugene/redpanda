@@ -12,7 +12,6 @@ import com.tmsjsb.redpanda.Service.GroupsService;
 import jakarta.validation.ValidationException;
 
 import java.util.List;
-import java.util.Objects;
 
 @Service
 @AllArgsConstructor
@@ -28,19 +27,24 @@ public class GroupsServiceImpl implements GroupsService {
 
   @Override
   public void createGroup(GroupsEntity newGroup) throws ValidationException {
-    // additional logic/validations here
+    GroupsEntity newUserGroupEntry = new GroupsEntity();
 
     // check if group already exists first, if yes throw error.
-    if (groupExists(newGroup.getGroupName()) && (Objects.isNull(newGroup.getUsername()))) {
+    if (groupExists(newGroup.getGroupName()) && (newGroup.getUsername().isEmpty())) {
       System.out.println("newGroup.getGroupName(): " + newGroup.getGroupName());
       throw new ValidationException();
     }
     // add new group w/o username
-    else if ((!(groupExists(newGroup.getGroupName())) && (Objects.isNull(newGroup.getUsername())))) {
-      System.out.println("empty");
-      newGroup.setUsername(" ");
+    else if ((!(groupExists(newGroup.getGroupName())) && (newGroup.getUsername().isEmpty() == true))) {
+      newUserGroupEntry.setGroupName(newGroup.getGroupName());
+      newUserGroupEntry.setUsername(" ");
     }
-    groupsRepository.save(newGroup);
+    // add new group w username
+    else if (((groupExists(newGroup.getGroupName())) && (newGroup.getUsername().isEmpty() == false))) {
+      newUserGroupEntry.setGroupName(newGroup.getGroupName());
+      newUserGroupEntry.setUsername(newGroup.getUsername());
+    }
+    groupsRepository.save(newUserGroupEntry);
   }
 
   @Override
@@ -49,8 +53,7 @@ public class GroupsServiceImpl implements GroupsService {
   }
 
   @Override
-  public String removeGroup(GroupsEntity oldGroup)
-  {
+  public String removeGroup(GroupsEntity oldGroup) {
     groupsRepository.delete(oldGroup);
     return "done";
   }

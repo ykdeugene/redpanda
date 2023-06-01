@@ -2,8 +2,6 @@ package com.tmsjsb.redpanda.Entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.Pattern;
@@ -20,13 +18,11 @@ import com.tmsjsb.redpanda.Interface.UserOnCreate;
 public class UserEntity {
 
   @Id
-  @GeneratedValue(strategy = GenerationType.AUTO)
   @Pattern(regexp = "^[a-zA-Z0-9]+$")
   @NotBlank
   private String username;
 
   @Column(name = "password")
-  // @Pattern(regexp = "^(?=.*[a-zA-Z])(?=.*\\d)(?=.*[!@#$%^&+=]).{8,10}$")
   @NotBlank(groups = UserOnCreate.class)
   @Null(groups = UserOnUpdateEmail.class)
   private String password;

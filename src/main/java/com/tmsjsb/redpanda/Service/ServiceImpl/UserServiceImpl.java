@@ -2,22 +2,20 @@ package com.tmsjsb.redpanda.Service.ServiceImpl;
 
 import com.tmsjsb.redpanda.Entity.UserEntity;
 import com.tmsjsb.redpanda.Repository.UserRepository;
+import com.tmsjsb.redpanda.Service.ErrorMgrService;
 import com.tmsjsb.redpanda.Service.UserService;
 
-import lombok.Getter;
-import lombok.Setter;
-
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.converter.json.MappingJacksonValue;
 import org.springframework.stereotype.Service;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
+import com.auth0.jwt.interfaces.DecodedJWT;
 
-import java.util.Optional;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.List;
 
 @Service
 public class UserServiceImpl implements UserService {
@@ -34,16 +32,16 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public MappingJacksonValue login(String username, String password) {
-        Optional<UserEntity> CheckUser = getUserById(username);
+    public Map<String, Object> login(String username, String password) {
 
-        JWTJsonData json = new JWTJsonData();
-        json.setResult("false");
+        Optional<UserEntity> CheckUser = getUserById(username);
+        Map<String, Object> jsonObject = new HashMap<>();
 
         if (CheckUser.isPresent()) {
             UserEntity ThisUser = CheckUser.get();
-            String HashedPassword = ThisUser.getPassword();
+            System.out.println("this user: " + ThisUser);
 
+            String HashedPassword = ThisUser.getPassword();
             int UserActive = ThisUser.getActiveStatus();
             if (passwordEncoder().matches(password, HashedPassword) && UserActive == 1) {
                 Algorithm algorithm = Algorithm.HMAC256("secret");
@@ -52,13 +50,17 @@ public class UserServiceImpl implements UserService {
                         .withClaim("username", username)
                         .sign(algorithm);
 
-                json.setResult("true");
-                json.setJwt(jwt);
+                jsonObject.put("result", "true");
+                jsonObject.put("jwt", jwt);
+            } else {
+                // incorrect pw or not active
+                jsonObject = ErrorMgrService.errorHandler("invalid credentials", Thread.currentThread().getStackTrace()[1]);
             }
+        } else {
+            // login user not found
+            jsonObject = ErrorMgrService.errorHandler("invalid credentials", Thread.currentThread().getStackTrace()[1]);
         }
-
-        MappingJacksonValue mapping = new MappingJacksonValue(json);
-        return mapping;
+        return jsonObject;
     }
 
     @Override
@@ -67,7 +69,10 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public Map<String, Object> updatePwd(String username, String password) {
+    public Map<String, Object> updatePwd(String token, String password) {
+
+        DecodedJWT decoded = JWT.decode(token);
+        String username = decoded.getClaim("username").asString();
 
         Optional<UserEntity> CheckUser = getUserById(username);
         Map<String, Object> jsonObject = new HashMap<>();
@@ -81,19 +86,23 @@ public class UserServiceImpl implements UserService {
                 System.out.println(password);
                 System.out.println(hashedPassword);
                 userRepository.save(ThisUser);
-                // userRepository.save(ThisUser);
                 jsonObject.put("results", "true");
             } catch (Exception e) {
-                System.out.println(e);
-                jsonObject.put("results", "BSJxxx (error code here) .updatePwd");
+                jsonObject = ErrorMgrService.errorHandler(e, Thread.currentThread().getStackTrace()[1]);
             }
+        } else {
+            // user not found error
+            jsonObject = ErrorMgrService.errorHandler("user not found", Thread.currentThread().getStackTrace()[1]);
         }
         return jsonObject;
 
     }
 
     @Override
-    public Map<String, Object> updateEmail(String username, String email) {
+    public Map<String, Object> updateEmail(String token, String email) {
+
+        DecodedJWT decoded = JWT.decode(token);
+        String username = decoded.getClaim("username").asString();
 
         Optional<UserEntity> CheckUser = getUserById(username);
         Map<String, Object> jsonObject = new HashMap<>();
@@ -105,73 +114,74 @@ public class UserServiceImpl implements UserService {
                 userRepository.save(ThisUser);
                 jsonObject.put("results", "true");
             } catch (Exception e) {
-                jsonObject.put("results", "BSJxxx (error code here)");
+                jsonObject = ErrorMgrService.errorHandler(e, Thread.currentThread().getStackTrace()[1]);
             }
+        } else {
+            // user not found error
+            jsonObject = ErrorMgrService.errorHandler("user not found", Thread.currentThread().getStackTrace()[1]);
         }
         return jsonObject;
     }
 
-    /*
-     * @Override
-     * public MappingJacksonValue updatePwd(String username, String password) {
-     * Optional<UserEntity> CheckUser = getUserById(username);
-     * 
-     * UpdateProfileJsonData json = new UpdateProfileJsonData();
-     * json.setResult("false");
-     * 
-     * if (CheckUser.isPresent()) {
-     * UserEntity ThisUser = CheckUser.get();
-     * // need to write error handlers <start>
-     * // need to write error handlers <end>
-     * String hashedPassword = passwordEncoder().encode(password);
-     * ThisUser.setPassword(hashedPassword);
-     * userRepository.save(ThisUser);
-     * json.setResult("true");
-     * 
-     * }
-     * MappingJacksonValue mapping = new MappingJacksonValue(json);
-     * return mapping;
-     * }
-     */
+    @Override
+    public Map<String,Object> createUser(String username, String password, String email,int activeStatus)
+    {
+        String results = "true";
+        Map<String,Object> jsonObject = new HashMap<>(0);
+        try{
+            Optional<UserEntity> CheckUser = getUserById(username);
 
-    /*
-     * @Override
-     * public MappingJacksonValue updateEmail(String username, String email) {
-     * Optional<UserEntity> CheckUser = getUserById(username);
-     * 
-     * UpdateProfileJsonData json = new UpdateProfileJsonData();
-     * json.setResult("false");
-     * 
-     * if (CheckUser.isPresent()) {
-     * UserEntity ThisUser = CheckUser.get();
-     * // need to write error handlers <start>
-     * // need to write error handlers <end>
-     * ThisUser.setEmail(email);
-     * userRepository.save(ThisUser);
-     * json.setResult("true");
-     * 
-     * }
-     * MappingJacksonValue mapping = new MappingJacksonValue(json);
-     * return mapping;
-     * }
-     */
+            if(CheckUser.isPresent())
+            {
+                jsonObject = ErrorMgrService.errorHandler("data exists", Thread.currentThread().getStackTrace()[1]);
+                return jsonObject;
+            }
+            UserEntity newUser = new UserEntity();
+            newUser.setUsername(username);
+            newUser.setPassword(passwordEncoder().encode(password));
+            newUser.setEmail(email);
+            newUser.setActiveStatus(activeStatus);
+            userRepository.save(newUser);
+            
+        }catch(Exception e)
+        {
+            jsonObject = ErrorMgrService.errorHandler(e, Thread.currentThread().getStackTrace()[1]);
+        }
+
+        jsonObject.put("results", results);
+        return jsonObject;
+    }
+
+    @Override
+    public Map<String,Object> getProfile(String token)
+    {
+        Map<String,Object> jsonObject = new HashMap<>(0);
+        try{
+            DecodedJWT decoded = JWT.decode(token);
+            String username = decoded.getClaim("username").asString();
+            Optional<UserEntity> user = userRepository.findById(username);
+            if(user.isPresent())
+            {
+                jsonObject.put("username", user.get().getUsername());
+                jsonObject.put("email", user.get().getEmail());
+                return jsonObject;
+            }
+            else
+            {
+                jsonObject = ErrorMgrService.errorHandler("user not found", Thread.currentThread().getStackTrace()[1]);
+                return jsonObject;
+            }
+
+        }catch(Exception e)
+        {
+            jsonObject = ErrorMgrService.errorHandler(e, Thread.currentThread().getStackTrace()[1]);
+            return jsonObject;
+        }
+    }
 
     @Override
     public List<UserEntity> getAllUsers() {
         return userRepository.findAll();
     }
 
-}
-
-@Getter
-@Setter
-class JWTJsonData {
-    private String result;
-    private String jwt;
-}
-
-@Getter
-@Setter
-class UpdateProfileJsonData {
-    private String result;
 }
