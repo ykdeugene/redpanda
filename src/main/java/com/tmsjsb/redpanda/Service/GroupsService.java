@@ -1,6 +1,7 @@
 package com.tmsjsb.redpanda.Service;
 
 import java.util.List;
+import java.util.Map;
 
 import com.tmsjsb.redpanda.Entity.GroupsEntity;
 
@@ -11,10 +12,12 @@ public interface GroupsService {
 
   List<GroupsEntity> getAllGroups();
 
-  void createGroup(GroupsEntity newGroup);
+  Map<String, Object> createGroup(GroupsEntity newGroup);
 
   boolean groupExists(String groupname);
 
-  String removeGroup(GroupsEntity oldGroup);
+  void removeGroup(GroupsEntity oldGroup);
+
+  Object getGroup(String token);
 
 }

@@ -42,13 +42,23 @@ public class ErrorMgrService {
     if (throwable == "user not found") {
       errorCode.clear();
       errorCode.put("results", "BSJxxx");
+    } else if (throwable == "Invalid Parameters") {
+      errorCode.clear();
+      errorCode.put("results", "BSJ369b");
+    } else if (throwable == "Invalid token") {
+      errorCode.clear();
+      errorCode.put("results", "BSJ370");
+    } else if (throwable == "invalid credentials") {
+      errorCode.clear();
+      errorCode.put("results", "BSJ371");
+    } else if (throwable == "no access") {
+      errorCode.clear();
+      errorCode.put("results", "BSJ373");
     } else if (throwable == "data exists") {
       errorCode.clear();
       errorCode.put("results", "BSJ375");
-    } else if (throwable == "invalid credentials") {
-      errorCode.clear();
-      errorCode.put("results", "BSJxxx");
     }
+    
 
     LocalTime currentTime = LocalTime.now();
 

@@ -1,4 +1,4 @@
-package com.tmsjsb.redpanda.Controller;
+package com.tmsjsb.redpanda.Controller.AdminController;
 
 import com.tmsjsb.redpanda.Service.GroupsService;
 import com.tmsjsb.redpanda.Service.UserService;
@@ -23,7 +23,7 @@ public class AdminGetController {
   public AdminGetController(UserService userService, GroupsService groupService) {
     this.userService = userService;
     this.groupsService = groupService;
-  }  
+  }
 
   @GetMapping("/get/allprofile")
   public ResponseEntity<List<UserEntity>> getAllUsers() {

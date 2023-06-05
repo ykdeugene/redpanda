@@ -7,14 +7,19 @@ import jakarta.persistence.Table;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.Null;
 
 import com.tmsjsb.redpanda.Interface.UserOnUpdateEmail;
-import com.tmsjsb.redpanda.Interface.UserOnUpdatePassword;
+import com.tmsjsb.redpanda.Interface.CompositeValidationGroup;
+import com.tmsjsb.redpanda.Interface.UpdateEmailUpdatePasswordGroup;
 import com.tmsjsb.redpanda.Interface.UserOnCreate;
+
+import jakarta.validation.GroupSequence;
 
 @Entity
 @Table(name = "user")
+@GroupSequence({ UserEntity.class, CompositeValidationGroup.class })
 public class UserEntity {
 
   @Id
@@ -29,13 +34,13 @@ public class UserEntity {
 
   @Column(name = "email")
   @Email
-  @Pattern(regexp = "^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$")
-  @Null(groups = UserOnUpdatePassword.class)
+  // @Null(groups = CompositeValidationGroup.class)
+  @NotEmpty(groups = CompositeValidationGroup.class)
+  // @Pattern(regexp = "^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$")
   private String email;
 
   @Column(name = "activestatus")
-  @Null(groups = UserOnUpdateEmail.class)
-  @Null(groups = UserOnUpdatePassword.class)
+  @Null(groups = UpdateEmailUpdatePasswordGroup.class)
   private int activeStatus;
 
   public String getUsername() {
@@ -69,5 +74,4 @@ public class UserEntity {
   public void setActiveStatus(int activeStatus) {
     this.activeStatus = activeStatus;
   }
-
 }

@@ -1,4 +1,4 @@
-package com.tmsjsb.redpanda.Controller;
+package com.tmsjsb.redpanda.Controller.AdminController;
 
 import java.util.HashMap;
 import java.util.List;
@@ -13,10 +13,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.tmsjsb.redpanda.Entity.GroupsEntity;
+import com.tmsjsb.redpanda.Service.ErrorMgrService;
 import com.tmsjsb.redpanda.Service.GroupsService;
 
 import jakarta.validation.Valid;
-import jakarta.validation.ValidationException;
 
 @RequestMapping("/admin")
 @RestController
@@ -37,17 +37,17 @@ public class AdminGroupController {
     // basic validations here
     if (bindingResult.hasErrors()) {
       // to add correct code
-      jsonObject.put("results", "BSJxxx (validation failed)");
+      jsonObject = ErrorMgrService.errorHandler("invalid fields", Thread.currentThread().getStackTrace()[1]);
       List<FieldError> errors = bindingResult.getFieldErrors();
       // jsonString = objectMapper.writeValueAsString(jsonObject);
       System.out.println(errors);
     } else {
       try {
-        groupsService.createGroup(group);
-        jsonObject.put("results", "true");
-      } catch (ValidationException e) {
+        Map<String, Object> result = groupsService.createGroup(group);
+        jsonObject = result;
+      } catch (Exception e) {
         // if group already exists in db error (to add correct code)
-        jsonObject.put("results", "BSJxxx (validation pass but gn exists in db)");
+        jsonObject = ErrorMgrService.errorHandler(e, Thread.currentThread().getStackTrace()[1]);
       }
     }
 

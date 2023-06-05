@@ -12,6 +12,7 @@ import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.interfaces.DecodedJWT;
 
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -32,7 +33,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public Map<String, Object> login(String username, String password) {
+    public Map<String, Object> login(String username, String password, String ipAddress, String browserType) {
 
         Optional<UserEntity> CheckUser = getUserById(username);
         Map<String, Object> jsonObject = new HashMap<>();
@@ -46,15 +47,20 @@ public class UserServiceImpl implements UserService {
             if (passwordEncoder().matches(password, HashedPassword) && UserActive == 1) {
                 Algorithm algorithm = Algorithm.HMAC256("secret");
 
+                Date expirationDate = new Date(System.currentTimeMillis()+900000);
+
                 String jwt = JWT.create()
                         .withClaim("username", username)
+                        .withClaim("ipAddress", ipAddress)
+                        .withClaim("browserType", browserType)
+                        .withExpiresAt(expirationDate)
                         .sign(algorithm);
 
                 jsonObject.put("result", "true");
                 jsonObject.put("jwt", jwt);
             } else {
                 // incorrect pw or not active
-                jsonObject = ErrorMgrService.errorHandler("invalid credentials", Thread.currentThread().getStackTrace()[1]);
+                jsonObject = ErrorMgrService.errorHandler("invalid credentials",Thread.currentThread().getStackTrace()[1]);
             }
         } else {
             // login user not found
@@ -83,8 +89,6 @@ public class UserServiceImpl implements UserService {
             try {
                 String hashedPassword = passwordEncoder().encode(password);
                 ThisUser.setPassword(hashedPassword);
-                System.out.println(password);
-                System.out.println(hashedPassword);
                 userRepository.save(ThisUser);
                 jsonObject.put("results", "true");
             } catch (Exception e) {
@@ -124,15 +128,59 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public Map<String,Object> createUser(String username, String password, String email,int activeStatus)
-    {
+    public Map<String, Object> adminUpdateUserPwd(String username, String password) {
+
+        Optional<UserEntity> CheckUser = getUserById(username);
+        Map<String, Object> jsonObject = new HashMap<>();
+
+        if (CheckUser.isPresent()) {
+            UserEntity ThisUser = CheckUser.get();
+            try {
+                String hashedPassword = passwordEncoder().encode(password);
+                ThisUser.setPassword(hashedPassword);
+                System.out.println(password);
+                System.out.println(hashedPassword);
+                userRepository.save(ThisUser);
+                jsonObject.put("results", "true");
+            } catch (Exception e) {
+                jsonObject = ErrorMgrService.errorHandler(e, Thread.currentThread().getStackTrace()[1]);
+            }
+        } else {
+            jsonObject = ErrorMgrService.errorHandler("user not found", Thread.currentThread().getStackTrace()[1]);
+        }
+        return jsonObject;
+
+    }
+
+    @Override
+    public Map<String, Object> adminUpdateUserEmail(String username, String email) {
+        Optional<UserEntity> CheckUser = getUserById(username);
+
+        Map<String, Object> jsonObject = new HashMap<>();
+
+        if (CheckUser.isPresent()) {
+            UserEntity ThisUser = CheckUser.get();
+            try {
+                ThisUser.setEmail(email);
+                userRepository.save(ThisUser);
+                jsonObject.put("results", "true");
+            } catch (Exception e) {
+                jsonObject = ErrorMgrService.errorHandler(e, Thread.currentThread().getStackTrace()[1]);
+            }
+        } else {
+            jsonObject = ErrorMgrService.errorHandler("user not found", Thread.currentThread().getStackTrace()[1]);
+        }
+        return jsonObject;
+    }
+
+    @Override
+    public Map<String, Object> createUser(String username, String password, String email, int activeStatus) {
         String results = "true";
-        Map<String,Object> jsonObject = new HashMap<>(0);
-        try{
+        Map<String, Object> jsonObject = new HashMap<>(0);
+        try {
             Optional<UserEntity> CheckUser = getUserById(username);
 
-            if(CheckUser.isPresent())
-            {
+            if (CheckUser.isPresent()) {
                 jsonObject = ErrorMgrService.errorHandler("data exists", Thread.currentThread().getStackTrace()[1]);
                 return jsonObject;
             }
@@ -142,9 +190,8 @@ public class UserServiceImpl implements UserService {
             newUser.setEmail(email);
             newUser.setActiveStatus(activeStatus);
             userRepository.save(newUser);
-            
-        }catch(Exception e)
-        {
+
+        } catch (Exception e) {
             jsonObject = ErrorMgrService.errorHandler(e, Thread.currentThread().getStackTrace()[1]);
         }
 
@@ -153,30 +200,43 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public Map<String,Object> getProfile(String token)
-    {
-        Map<String,Object> jsonObject = new HashMap<>(0);
-        try{
+    public Map<String, Object> getProfile(String token) {
+        Map<String, Object> jsonObject = new HashMap<>(0);
+        try {
             DecodedJWT decoded = JWT.decode(token);
             String username = decoded.getClaim("username").asString();
             Optional<UserEntity> user = userRepository.findById(username);
-            if(user.isPresent())
-            {
+            if (user.isPresent()) {
                 jsonObject.put("username", user.get().getUsername());
                 jsonObject.put("email", user.get().getEmail());
                 return jsonObject;
-            }
-            else
-            {
+            } else {
                 jsonObject = ErrorMgrService.errorHandler("user not found", Thread.currentThread().getStackTrace()[1]);
                 return jsonObject;
             }
 
-        }catch(Exception e)
-        {
+        } catch (Exception e) {
             jsonObject = ErrorMgrService.errorHandler(e, Thread.currentThread().getStackTrace()[1]);
             return jsonObject;
         }
+    }
+
+    @Override
+    public Map<String, Object> updateActiveStatus(String token, int activeStatus) {
+        Map<String, Object> jsonObject = new HashMap<>(0);
+        try {
+            DecodedJWT decoded = JWT.decode(token);
+            String username = decoded.getClaim("username").asString();
+            Optional<UserEntity> user = userRepository.findById(username);
+            UserEntity EditedUser = user.get();
+            EditedUser.setActiveStatus(activeStatus);
+            userRepository.save(EditedUser);
+            jsonObject.put("results", "true");
+
+        } catch (Exception e) {
+            jsonObject = ErrorMgrService.errorHandler(e, Thread.currentThread().getStackTrace()[1]);
+        }
+        return jsonObject;
     }
 
     @Override
