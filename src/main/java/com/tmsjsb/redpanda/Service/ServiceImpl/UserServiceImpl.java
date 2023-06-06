@@ -12,6 +12,7 @@ import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.interfaces.DecodedJWT;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -47,7 +48,7 @@ public class UserServiceImpl implements UserService {
             if (passwordEncoder().matches(password, HashedPassword) && UserActive == 1) {
                 Algorithm algorithm = Algorithm.HMAC256("secret");
 
-                Date expirationDate = new Date(System.currentTimeMillis()+900000);
+                Date expirationDate = new Date(System.currentTimeMillis() + 900000);
 
                 String jwt = JWT.create()
                         .withClaim("username", username)
@@ -60,7 +61,8 @@ public class UserServiceImpl implements UserService {
                 jsonObject.put("jwt", jwt);
             } else {
                 // incorrect pw or not active
-                jsonObject = ErrorMgrService.errorHandler("invalid credentials",Thread.currentThread().getStackTrace()[1]);
+                jsonObject = ErrorMgrService.errorHandler("invalid credentials",
+                        Thread.currentThread().getStackTrace()[1]);
             }
         } else {
             // login user not found
@@ -90,7 +92,7 @@ public class UserServiceImpl implements UserService {
                 String hashedPassword = passwordEncoder().encode(password);
                 ThisUser.setPassword(hashedPassword);
                 userRepository.save(ThisUser);
-                jsonObject.put("results", "true");
+                jsonObject.put("result", "true");
             } catch (Exception e) {
                 jsonObject = ErrorMgrService.errorHandler(e, Thread.currentThread().getStackTrace()[1]);
             }
@@ -116,7 +118,7 @@ public class UserServiceImpl implements UserService {
             try {
                 ThisUser.setEmail(email);
                 userRepository.save(ThisUser);
-                jsonObject.put("results", "true");
+                jsonObject.put("result", "true");
             } catch (Exception e) {
                 jsonObject = ErrorMgrService.errorHandler(e, Thread.currentThread().getStackTrace()[1]);
             }
@@ -141,7 +143,7 @@ public class UserServiceImpl implements UserService {
                 System.out.println(password);
                 System.out.println(hashedPassword);
                 userRepository.save(ThisUser);
-                jsonObject.put("results", "true");
+                jsonObject.put("result", "true");
             } catch (Exception e) {
                 jsonObject = ErrorMgrService.errorHandler(e, Thread.currentThread().getStackTrace()[1]);
             }
@@ -163,7 +165,7 @@ public class UserServiceImpl implements UserService {
             try {
                 ThisUser.setEmail(email);
                 userRepository.save(ThisUser);
-                jsonObject.put("results", "true");
+                jsonObject.put("result", "true");
             } catch (Exception e) {
                 jsonObject = ErrorMgrService.errorHandler(e, Thread.currentThread().getStackTrace()[1]);
             }
@@ -175,7 +177,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public Map<String, Object> createUser(String username, String password, String email, int activeStatus) {
-        String results = "true";
+        String result = "true";
         Map<String, Object> jsonObject = new HashMap<>(0);
         try {
             Optional<UserEntity> CheckUser = getUserById(username);
@@ -195,7 +197,7 @@ public class UserServiceImpl implements UserService {
             jsonObject = ErrorMgrService.errorHandler(e, Thread.currentThread().getStackTrace()[1]);
         }
 
-        jsonObject.put("results", results);
+        jsonObject.put("result", result);
         return jsonObject;
     }
 
@@ -222,16 +224,14 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public Map<String, Object> updateActiveStatus(String token, int activeStatus) {
+    public Map<String, Object> updateActiveStatus(String username, int activeStatus) {
         Map<String, Object> jsonObject = new HashMap<>(0);
         try {
-            DecodedJWT decoded = JWT.decode(token);
-            String username = decoded.getClaim("username").asString();
             Optional<UserEntity> user = userRepository.findById(username);
             UserEntity EditedUser = user.get();
             EditedUser.setActiveStatus(activeStatus);
             userRepository.save(EditedUser);
-            jsonObject.put("results", "true");
+            jsonObject.put("result", "true");
 
         } catch (Exception e) {
             jsonObject = ErrorMgrService.errorHandler(e, Thread.currentThread().getStackTrace()[1]);
@@ -240,8 +240,21 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public List<UserEntity> getAllUsers() {
-        return userRepository.findAll();
+    public List<Map<String,Object>> getAllUsers() {
+
+        List<UserEntity> users = userRepository.findAll();
+        List<Map<String,Object>> newList = new ArrayList<>();
+        
+        for(int i = 0; i < users.size();i++)
+        {
+            Map<String,Object> temp = new HashMap<>(0);
+            temp.put("username", users.get(i).getUsername());
+            temp.put("email", users.get(i).getEmail());
+            temp.put("activeStatus", users.get(i).getActiveStatus());
+            newList.add(temp);
+        }
+
+        return newList;
     }
 
 }

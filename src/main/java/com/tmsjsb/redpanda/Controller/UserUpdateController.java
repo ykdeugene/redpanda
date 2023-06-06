@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.tmsjsb.redpanda.Entity.UserEntity;
 import com.tmsjsb.redpanda.Interface.UserOnUpdateEmail;
 import com.tmsjsb.redpanda.Interface.UserOnUpdatePassword;
+import com.tmsjsb.redpanda.Service.ErrorMgrService;
 import com.tmsjsb.redpanda.Service.UserService;
 
 import jakarta.validation.Valid;
@@ -38,7 +39,7 @@ public class UserUpdateController {
 
     if (bindingResult.hasErrors() || !token.contains("Bearer ")) {
       // to add correct code
-      jsonObject.put("results", "BSJxxx (validation failed)");
+      jsonObject.put("result", "BSJxxx (validation failed)");
       List<FieldError> errors = bindingResult.getFieldErrors();
       System.out.println(errors);
     } else {
@@ -47,8 +48,7 @@ public class UserUpdateController {
         Map<String, Object> result = userService.updateEmail(token, user.getEmail());
         jsonObject = result;
       } catch (Exception e) {
-        jsonObject.put("results", "BSJxxx (exception error)");
-        System.out.println(e);
+        jsonObject = ErrorMgrService.errorHandler(e, Thread.currentThread().getStackTrace()[1]);
       }
     }
     return ResponseEntity.ok(jsonObject);
@@ -66,19 +66,19 @@ public class UserUpdateController {
 
     if (bindingResult.hasErrors() || !token.contains("Bearer")) {
       // to add correct code
-      jsonObject.put("results", "BSJxxx (bindingResult password validation failed)");
+      jsonObject.put("result", "BSJxxx (bindingResult password validation failed)");
       List<FieldError> errors = bindingResult.getFieldErrors();
       // jsonString = objectMapper.writeValueAsString(jsonObject);
       System.out.println(errors);
     } else if (!validatePwd) {
-      jsonObject.put("results", "BSJxxx (password validation failed)");
+      jsonObject.put("result", "BSJxxx (password validation failed)");
     } else {
       token = token.split(" ")[1];
       try {
         Map<String, Object> result = userService.updatePwd(token, user.getPassword());
         jsonObject = result;
       } catch (Exception e) {
-        jsonObject.put("results", "BSJxxx (exception error)");
+        jsonObject = ErrorMgrService.errorHandler(e, Thread.currentThread().getStackTrace()[1]);
       }
     }
     return ResponseEntity.ok(jsonObject);

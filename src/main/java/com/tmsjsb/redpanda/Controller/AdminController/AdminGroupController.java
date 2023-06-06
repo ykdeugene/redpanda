@@ -57,7 +57,7 @@ public class AdminGroupController {
   @PostMapping("/update/group")
   public ResponseEntity<Map<String, Object>> updateGroup(@RequestBody Map<String, Object> requestBody) {
     Map<String, Object> returnObject = new HashMap<>(0);
-    String results = "true";
+    String result = "true";
 
     try {
       String groupName = (String) requestBody.get("groupName");
@@ -72,13 +72,11 @@ public class AdminGroupController {
       } else {
         groupsService.createGroup(newGroup);
       }
-
+      returnObject.put("result", result);
     } catch (Exception e) {
-      results = "internal error";
+      returnObject = ErrorMgrService.errorHandler(e, Thread.currentThread().getStackTrace()[1]);
       System.out.println("hello!" + e);
     }
-
-    returnObject.put("results", results);
 
     return ResponseEntity.ok().body(returnObject);
   }

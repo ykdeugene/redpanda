@@ -28,12 +28,12 @@ public class UserEntity {
   private String username;
 
   @Column(name = "password")
-  @NotBlank(groups = UserOnCreate.class)
-  @Null(groups = UserOnUpdateEmail.class)
+  // @NotBlank(groups = UserOnCreate.class)
+  // @NotEmpty(groups = UserOnUpdateEmail.class)
   private String password;
 
   @Column(name = "email")
-  @Email
+  // @Email
   // @Null(groups = CompositeValidationGroup.class)
   @NotEmpty(groups = CompositeValidationGroup.class)
   // @Pattern(regexp = "^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$")

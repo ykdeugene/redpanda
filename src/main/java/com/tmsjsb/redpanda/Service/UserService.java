@@ -13,9 +13,9 @@ public interface UserService {
 
     Map<String, Object> updateEmail(String username, String email);
 
-    Map<String, Object> updateActiveStatus(String token, int activeStatus);
+    Map<String, Object> updateActiveStatus(String username, int activeStatus);
 
-    List<UserEntity> getAllUsers();
+    List<Map<String,Object>> getAllUsers();
 
     Map<String, Object> createUser(String username, String password, String email, int activeStatus);
 

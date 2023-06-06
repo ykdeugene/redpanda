@@ -12,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.http.HttpStatus;
 
 import java.util.List;
+import java.util.Map;
 
 @RequestMapping(("/admin"))
 @RestController
@@ -26,9 +27,9 @@ public class AdminGetController {
   }
 
   @GetMapping("/get/allprofile")
-  public ResponseEntity<List<UserEntity>> getAllUsers() {
-    List<UserEntity> users = userService.getAllUsers();
-    return new ResponseEntity<>(users, HttpStatus.OK);
+  public ResponseEntity<?> getAllUsers() {
+    //List<UserEntity> users = userService.getAllUsers();
+    return ResponseEntity.ok().body(userService.getAllUsers());
   }
 
   @GetMapping("/get/allgroup")

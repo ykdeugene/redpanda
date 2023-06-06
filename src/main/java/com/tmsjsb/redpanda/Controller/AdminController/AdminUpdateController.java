@@ -80,10 +80,10 @@ public class AdminUpdateController {
 
     if (bindingResult.hasErrors()) {
       // to add correct code
-      jsonObject = ErrorMgrService.errorHandler("invalid fields", Thread.currentThread().getStackTrace()[1]);
       List<FieldError> errors = bindingResult.getFieldErrors();
       // jsonString = objectMapper.writeValueAsString(jsonObject);
       System.out.println(errors);
+      jsonObject = ErrorMgrService.errorHandler("invalid fields", Thread.currentThread().getStackTrace()[1]);
     } else {
       try {
         Map<String, Object> result = userService.adminUpdateUserEmail(user.getUsername(), user.getEmail());
@@ -108,16 +108,23 @@ public class AdminUpdateController {
     Boolean validatePwd = matcher.matches();
 
     if (bindingResult.hasErrors()) {
-      returnObject.put("results", "BSJxxx (validation failed)");
+      returnObject = ErrorMgrService.errorHandler("invalid fields", Thread.currentThread().getStackTrace()[1]);
       List<FieldError> errors = bindingResult.getFieldErrors();
       // jsonString = objectMapper.writeValueAsString(jsonObject);
       System.out.println(errors);
       return ResponseEntity.ok().body(returnObject);
     } else if (!validatePwd) {
-      returnObject.put("results", "BSJ-369b (password validation failed)");
+      returnObject = ErrorMgrService.errorHandler("invalid credentials", Thread.currentThread().getStackTrace()[1]);
     }
     return ResponseEntity.ok()
         .body(userService.createUser(user.getUsername(), user.getPassword(), user.getEmail(), user.getActiveStatus()));
+  }
+
+  @PostMapping("/update/activestatus")
+  public ResponseEntity<Map<String, Object>> updateActiveStatus(@RequestBody Map<String, Object> requestBody) {
+    String username = (String) requestBody.get("username");
+    int activeStatus = (int) requestBody.get("activeStatus");
+    return ResponseEntity.ok().body(userService.updateActiveStatus(username, activeStatus));
   }
 
 }

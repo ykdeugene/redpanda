@@ -29,8 +29,8 @@ public class UserGetController {
     Map<String, Object> returnObject = new HashMap<>(0);
 
     if (token == null || !token.contains("Bearer")) {
-      String results = "BSJ-370";
-      returnObject.put("results", results);
+      String result = "BSJ-370";
+      returnObject.put("result", result);
       return ResponseEntity.ok().body(returnObject);
     } else {
       token = token.split(" ")[1];
@@ -45,8 +45,8 @@ public class UserGetController {
 
     if (token == null || !token.contains("Bearer")) {
       System.out.println("check result: " + token == null);
-      String results = "BSJ-370";
-      returnObject.put("results", results);
+      String result = "BSJ-370";
+      returnObject.put("result", result);
       return ResponseEntity.ok().body(returnObject);
     }
 

@@ -7,68 +7,62 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class ErrorMgrService {
-  
+
   public static Map<String, Object> errorHandler(Throwable throwable, StackTraceElement location) {
     Map<String, Object> errorCode = new HashMap<>();
-    errorCode.put("results", "uncaught error");
+    errorCode.put("result", "BSJ400");
 
     StringWriter stringWriter = new StringWriter();
     PrintWriter printWriter = new PrintWriter(stringWriter);
     throwable.printStackTrace(printWriter);
-  
+
     if (stringWriter.toString().contains("ConstraintViolationImpl")) {
       errorCode.clear();
-      errorCode.put("results", "BSJ372");
+      errorCode.put("result", "BSJ372");
     }
 
     LocalTime currentTime = LocalTime.now();
 
     System.out.println(
-    "===============================\n" +
-    "========== Error Log ==========\n" +
-    "===============================\n" +
-    "Time: " + currentTime + "\n" +
-    "Loc: " + location + "\n" +
-    "DevMode" + stringWriter.toString()
-    );
+        "===============================\n" +
+            "========== Error Log ==========\n" +
+            "===============================\n" +
+            "Time: " + currentTime + "\n" +
+            "Loc: " + location + "\n" +
+            "DevMode" + stringWriter.toString());
 
     return errorCode;
   }
 
   public static Map<String, Object> errorHandler(String throwable, StackTraceElement location) {
     Map<String, Object> errorCode = new HashMap<>();
-    errorCode.put("results", "uncaught error");
-  
+
     if (throwable == "user not found") {
-      errorCode.clear();
-      errorCode.put("results", "BSJxxx");
+      errorCode.put("result", "BSJxxx");
     } else if (throwable == "Invalid Parameters") {
-      errorCode.clear();
-      errorCode.put("results", "BSJ369b");
+      errorCode.put("result", "BSJ369b");
     } else if (throwable == "Invalid token") {
-      errorCode.clear();
-      errorCode.put("results", "BSJ370");
+      errorCode.put("result", "BSJ370");
     } else if (throwable == "invalid credentials") {
-      errorCode.clear();
-      errorCode.put("results", "BSJ371");
+      errorCode.put("result", "BSJ371");
     } else if (throwable == "no access") {
-      errorCode.clear();
-      errorCode.put("results", "BSJ373");
+      errorCode.put("result", "BSJ373");
     } else if (throwable == "data exists") {
-      errorCode.clear();
-      errorCode.put("results", "BSJ375");
+      errorCode.put("result", "BSJ375");
+    } else if (throwable == "invalid fields") {
+      errorCode.put("result", "BSJ372");
+    } else {
+      errorCode.put("result", "BSJ400");
     }
-    
 
     LocalTime currentTime = LocalTime.now();
 
     System.out.println(
-    "===============================\n" +
-    "========== Error Log ==========\n" +
-    "===============================\n" +
-    "Time: " + currentTime + "\n" +
-    "Loc: " + location + "\n"
-    );
+        "===============================\n" +
+            "========== Error Log ==========\n" +
+            "===============================\n" +
+            "Time: " + currentTime + "\n" +
+            "Loc: " + location + "\n");
 
     return errorCode;
   }

@@ -42,14 +42,14 @@ public class GroupsServiceImpl implements GroupsService {
     // add new group w/o username
     else if ((!(groupExists(newGroup.getGroupName())) && (newGroup.getUsername() == null))) {
       newUserGroupEntry.setGroupName(newGroup.getGroupName());
-      newUserGroupEntry.setUsername(" ");
-      jsonObject.put("results", "true");
+      newUserGroupEntry.setUsername("");
+      jsonObject.put("result", "true");
     }
     // add new group w username
     else {
       newUserGroupEntry.setGroupName(newGroup.getGroupName());
       newUserGroupEntry.setUsername(newGroup.getUsername());
-      jsonObject.put("results", "true");
+      jsonObject.put("result", "true");
     }
     groupsRepository.save(newUserGroupEntry);
     return jsonObject;
