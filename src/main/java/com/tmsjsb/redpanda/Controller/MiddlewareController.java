@@ -67,7 +67,7 @@ public class MiddlewareController {
     }
   }
 
-  @Pointcut("execution(* com.tmsjsb.redpanda.Controller..*(..)) && !execution(* com.tmsjsb.redpanda.Controller.AuthController.login(..)) && !execution(* com.tmsjsb.redpanda.Controller.AdminController..*(..))")
+  @Pointcut("execution(* com.tmsjsb.redpanda.Controller..*(..)) && !execution(* com.tmsjsb.redpanda.Controller.AuthController.AuthLogin(..)) && !execution(* com.tmsjsb.redpanda.Controller.AdminController..*(..))")
   public void interceptedMethods() {}
   
   @Around("interceptedMethods()")
