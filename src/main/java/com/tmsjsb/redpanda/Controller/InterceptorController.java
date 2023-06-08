@@ -20,11 +20,11 @@ import jakarta.servlet.http.HttpServletRequest;
 
 @Aspect
 @Component
-public class MiddlewareController {
+public class InterceptorController {
 
   private final AuthService authService;
 
-  public MiddlewareController(AuthService authService) {
+  public InterceptorController(AuthService authService) {
     this.authService = authService;
   }
 
