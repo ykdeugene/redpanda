@@ -60,8 +60,6 @@ public class AppServiceImpl implements AppService {
     String result = "true";
     Map<String, Object> jsonObject = new HashMap<>(0);
 
-    // insert validation logic here
-
     try {
       Optional<AppEntity> CheckApp = getAppById(App_Acronym);
 
@@ -69,6 +67,7 @@ public class AppServiceImpl implements AppService {
         jsonObject = ErrorMgrService.errorHandler("data exists", Thread.currentThread().getStackTrace()[1]);
         return jsonObject;
       }
+
       AppEntity newApp = new AppEntity();
       newApp.setApp_Acronym(App_Acronym);
       newApp.setApp_Description(App_Description);
@@ -83,6 +82,7 @@ public class AppServiceImpl implements AppService {
       appRepository.save(newApp);
     } catch (Exception e) {
       jsonObject = ErrorMgrService.errorHandler(e, Thread.currentThread().getStackTrace()[1]);
+      return jsonObject;
     }
 
     jsonObject.put("result", result);

@@ -97,13 +97,10 @@ public class AdminUpdateController {
 
   @Validated(CompositeValidationGroup.class)
   @PostMapping("/update/createuser")
-  public ResponseEntity<Map<String, Object>> createUser(
-      @Valid @RequestBody UserEntity user,
-      BindingResult bindingResult) {
+  public ResponseEntity<Map<String, Object>> createUser(@Valid @RequestBody UserEntity user, BindingResult bindingResult) {
     Map<String, Object> returnObject = new HashMap<>(0);
 
-    Pattern pattern = Pattern.compile(
-        "^(?=.*[a-zA-Z])(?=.*[0-9])(?=.*[!@#$%^&*()_+\\-=\\[\\]{};':\"\\\\|,.<>\\/?`~])[a-zA-Z0-9!@#$%^&*()_+\\-=\\[\\]{};':\"\\\\|,.<>\\/?`~]{8,10}$");
+    Pattern pattern = Pattern.compile("^(?=.*[a-zA-Z])(?=.*[0-9])(?=.*[!@#$%^&*()_+\\-=\\[\\]{};':\"\\\\|,.<>\\/?`~])[a-zA-Z0-9!@#$%^&*()_+\\-=\\[\\]{};':\"\\\\|,.<>\\/?`~]{8,10}$");
     Matcher matcher = pattern.matcher(user.getPassword());
     Boolean validatePwd = matcher.matches();
 
@@ -116,8 +113,7 @@ public class AdminUpdateController {
     } else if (!validatePwd) {
       returnObject = ErrorMgrService.errorHandler("invalid credentials", Thread.currentThread().getStackTrace()[1]);
     }
-    return ResponseEntity.ok()
-        .body(userService.createUser(user.getUsername(), user.getPassword(), user.getEmail(), user.getActiveStatus()));
+    return ResponseEntity.ok().body(userService.createUser(user.getUsername(), user.getPassword(), user.getEmail(), user.getActiveStatus()));
   }
 
   @PostMapping("/update/activestatus")

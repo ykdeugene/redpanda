@@ -28,7 +28,9 @@ public class AppController {
   }
 
   @PostMapping("/create")
-  public ResponseEntity<Map<String, Object>> createUser(@RequestBody AppEntity app) {
+  public ResponseEntity<Map<String, Object>> createApp(@RequestBody AppEntity app) {
+    // insert validation here
+
     return ResponseEntity.ok().body(appService.createApp(app.getApp_Acronym(), app.getApp_Description(), app.getApp_Rnumber(), app.getApp_startDate(), app.getApp_endDate(), app.getApp_permit_Create(), app.getApp_permit_Open(), app.getApp_permit_toDoList(), app.getApp_permit_Doing(), app.getApp_permit_Done()));
   }
 }

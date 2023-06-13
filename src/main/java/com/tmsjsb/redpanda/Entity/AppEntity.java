@@ -1,5 +1,7 @@
 package com.tmsjsb.redpanda.Entity;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
@@ -19,33 +21,43 @@ import lombok.Setter;
 
 public class AppEntity {
   @Id
+  @JsonProperty("App_Acronym")
   @Column(name = "app_acronym")
-  private String App_Acronym;
+  private String app_Acronym;
 
+  @JsonProperty("App_Description")
   @Column(name = "app_description")
-  private String App_Description;
+  private String app_Description;
 
+  @JsonProperty("App_Rnumber")
   @Column(name = "app_rnumber")
-  private Integer App_Rnumber;
+  private Integer app_Rnumber;
 
+  @JsonProperty("App_startDate")
   @Column(name = "app_startdate")
-  private String App_startDate;
+  private String app_startDate;
 
+  @JsonProperty("App_endDate")
   @Column(name = "app_enddate")
-  private String App_endDate;
+  private String app_endDate;
 
+  @JsonProperty("App_permit_Create")
   @Column(name = "app_permit_create")
-  private String App_permit_Create;
+  private String app_permit_Create;
 
+  @JsonProperty("App_permit_Open")
   @Column(name = "app_permit_open")
-  private String App_permit_Open;
+  private String app_permit_Open;
 
+  @JsonProperty("App_permit_toDoList")
   @Column(name = "app_permit_todolist")
-  private String App_permit_toDoList;
+  private String app_permit_toDoList;
 
+  @JsonProperty("App_permit_Doing")
   @Column(name = "app_permit_doing")
-  private String App_permit_Doing;
+  private String app_permit_Doing;
 
+  @JsonProperty("App_permit_Done")
   @Column(name = "app_permit_done")
-  private String App_permit_Done;
+  private String app_permit_Done;
 }
