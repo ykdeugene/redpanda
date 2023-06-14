@@ -18,7 +18,7 @@ public class PlanEntity {
   @Id
   @Column(name = "plan_mvp_name")
   @JsonProperty("Plan_MVP_name")
-  private String plan_MVP_name;
+  private String planMVPname;
 
   @Id
   @Column(name = "plan_appacronym")
@@ -26,12 +26,15 @@ public class PlanEntity {
   private String planappAcronym;
 
   @Column(name = "plan_startdate")
+  @JsonProperty("Plan_startDate")
   private String PlanstartDate;
 
   @Column(name = "plan_enddate")
+  @JsonProperty("Plan_endDate")
   private String PlanendDate;
 
   @Column(name = "plan_colour")
+  @JsonProperty("Plan_colour")
   private String Plancolour;
 
 }

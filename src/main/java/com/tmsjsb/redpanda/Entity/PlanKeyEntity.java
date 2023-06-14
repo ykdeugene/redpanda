@@ -12,7 +12,7 @@ import lombok.*;
 @Embeddable
 public class PlanKeyEntity implements Serializable {
 
-  private String plan_MVP_name;
+  private String planMVPname;
 
   private String planappAcronym;
 

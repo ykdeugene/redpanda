@@ -51,6 +51,8 @@ public class ErrorMgrService {
       errorCode.put("result", "BSJ375");
     } else if (throwable == "invalid fields") {
       errorCode.put("result", "BSJ372");
+    } else if (throwable == "data not found") {
+      errorCode.put("result", "BSJ374");
     } else {
       errorCode.put("result", "BSJ400");
     }
