@@ -48,7 +48,7 @@ public class UserServiceImpl implements UserService {
             if (passwordEncoder().matches(password, HashedPassword) && UserActive == 1) {
                 Algorithm algorithm = Algorithm.HMAC256("secret");
 
-                Date expirationDate = new Date(System.currentTimeMillis() + 900000);
+                Date expirationDate = new Date(System.currentTimeMillis() + 10800000); // this is 180 minutes
 
                 String jwt = JWT.create()
                         .withClaim("username", username)

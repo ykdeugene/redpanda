@@ -33,7 +33,7 @@ public class InterceptorController {
   }
 
 
-  @Pointcut("execution(* com.tmsjsb.redpanda.Controller.AdminController..*(..)) && !execution(* com.tmsjsb.redpanda.Controller.AuthController.AuthLogin(..)) && args(.., *)")
+  @Pointcut("execution(* com.tmsjsb.redpanda.Controller..*(..)) && !execution(* com.tmsjsb.redpanda.Controller.AuthController.AuthLogin(..)) && args(.., *)")
   public void interceptedAdminMethods() {}
 
   @Around("interceptedAdminMethods()")
@@ -41,79 +41,79 @@ public class InterceptorController {
     Map<String, Object> errorObject = new HashMap<>();
     HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest();
 
-    Object[] args = joinPointAdmin.getArgs();
-    Object body = args[0];
-    System.out.println("Request Body Object: " + body);
-
-    String password = null;
-    String taskid = null;
-    String app_acronym = null;
-    String plan_app_acronym = null;
-
-    if (body instanceof Map) {
-      Map<?, ?> requestBody = (Map<?, ?>) body;
-
-      for (Map.Entry<?, ?> entry : requestBody.entrySet()) {
-        Object key = entry.getKey();
-        Object value = entry.getValue();
-
-        if ("password".equals(key)) {
-          password = value.toString();
-          System.out.println("Password: " + password);
-        }
-        else if ("taskid".equals(key)) {
-          taskid = value.toString();
-          System.out.println("taskid: " + taskid);
-        }
-        else if ("app_acronym".equals(key)) {
-          app_acronym = value.toString();
-          System.out.println("app_acronym: " + app_acronym);
-        }
-        else if ("plan_app_acronym".equals(key)) {
-          plan_app_acronym = value.toString();
-          System.out.println("plan_app_acronym: " + plan_app_acronym);
-        }
-    }
-  }
-
-  //   String requestBody = extractRequestBody(request);
-  //   // add logic here for getting permits from app selected
-  //   System.out.println("requestbody" + requestBody);
-  //   if (controllerName.contains("task")) {
-  //     // check taskid for app concat -> task permits
-  //     System.out.println("Executing method in TaskController.");
-  // } else if (controllerName.contains("app")) {
-  //     // check for app_acronym -> app permits
-  //     System.out.println("Executing method in AppController.");
-  // } else if (controllerName.contains("plan")) {
-  //     // check for plan_app_acronym -> plan permits
-  //     System.out.println("Executing method in PlanController.");
-  // } else {
-  //     // Logic for other controllers
-  //     System.out.println("Executing method in " + controllerName + " controller.");
-  // }
-
     String jwt = request.getHeader("Authorization");
     String ipAddress = request.getRemoteAddr();
-    String browserType = request.getHeader("User-Agent");
-      
+    String browserType = request.getHeader("User-Agent");  
+    boolean isValid = false; boolean isAuth = false; 
+
     if (jwt == null) {
       errorObject = ErrorMgrService.errorHandler("Invalid Parameters", Thread.currentThread().getStackTrace()[1]);
       return new ResponseEntity<>(errorObject, HttpStatus.OK);
     }
-    System.out.println("intercepted admin");
-    boolean isValid = false; boolean isAdmin = false; 
-
+    
     String username = authService.TokenToUsername(jwt);
-
     isValid = authService.validateJwt(jwt, ipAddress, browserType);
-    isAdmin = authService.CheckGroup(username, "admin");
-
+    
     if (!isValid) {
       errorObject = ErrorMgrService.errorHandler("Invalid token", Thread.currentThread().getStackTrace()[1]);
       return new ResponseEntity<>(errorObject, HttpStatus.OK);
     } 
-    if (!isAdmin) {
+  
+    String route = request.getRequestURI();
+    Object[] args = joinPointAdmin.getArgs();
+    Object body = args[0];
+    System.out.println("Request Body Object: " + body);
+
+    String password = null; //for testing
+    String taskstate = null;
+    String taskid = null;
+    String taskappacronym = null;
+    String permit = null;
+
+    //System.out.println("Route: " + route);
+    if (body instanceof Map) {
+      Map<?, ?> requestBody = (Map<?, ?>) body;
+
+    for (Map.Entry<?, ?> entry : requestBody.entrySet()) {
+      Object key = entry.getKey();
+      Object value = entry.getValue();
+
+      if ("password".equals(key)) {
+        password = value.toString();
+        //System.out.println("Password: " + password);
+      } else if ("Task_state".equals(key)) {
+        taskstate = value.toString();
+      } else if ("Task_id".equals(key)) {
+        taskid = value.toString();
+        taskappacronym = taskid.split("_")[0];
+        //System.out.println("taskid: " + taskid);
+      } else if ("Task_app_Acronym".equals(key)) {
+        taskappacronym = value.toString();
+      } 
+    }
+  }
+  if(route.contains("get")){ 
+    System.out.println("Executing GET.");
+  } else if (route.contains("task")) {
+      // check taskid for app concat -> task permits (task_state permit)
+    if (taskid.equals(null)){
+      // create permit
+    }
+      // other permits
+    isAuth = true; // tempoary
+      System.out.println("Executing in TaskController");
+  } else if (route.contains("app")) {
+    isAuth = authService.CheckGroup(username, "Project Lead");
+      System.out.println("Executing in AppController");
+  } else if (route.contains("plan")) {
+    isAuth = authService.CheckGroup(username, "Project Manager");
+      System.out.println("Executing in PlanController");
+  } else if (route.contains("admin")){
+    isAuth = authService.CheckGroup(username, "admin");
+      System.out.println("Executing in Admin");
+  }
+
+    if (!isAuth) {
       errorObject = ErrorMgrService.errorHandler("no access", Thread.currentThread().getStackTrace()[1]);
       return new ResponseEntity<>(errorObject, HttpStatus.OK);
     }
@@ -123,36 +123,36 @@ public class InterceptorController {
     }
   }
 
-  @Pointcut("execution(* com.tmsjsb.redpanda.Controller..*(..)) && !execution(* com.tmsjsb.redpanda.Controller.AuthController.AuthLogin(..)) && !execution(* com.tmsjsb.redpanda.Controller.AdminController..*(..))")
-  public void interceptedMethods() {}
+  // @Pointcut("execution(* com.tmsjsb.redpanda.Controller..*(..)) && !execution(* com.tmsjsb.redpanda.Controller.AuthController.AuthLogin(..)) && !execution(* com.tmsjsb.redpanda.Controller.AdminController..*(..))")
+  // public void interceptedMethods() {}
   
-  @Around("interceptedMethods()")
-  public Object interceptedMethods(ProceedingJoinPoint joinPoint) throws Throwable {
-    Map<String, Object> errorObject = new HashMap<>();
-    // Check if the request has a JWT in the header
+  // @Around("interceptedMethods()")
+  // public Object interceptedMethods(ProceedingJoinPoint joinPoint) throws Throwable {
+  //   Map<String, Object> errorObject = new HashMap<>();
+  //   // Check if the request has a JWT in the header
 
-    System.out.println("intercepted normal");
-    HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
-    String jwt = request.getHeader("Authorization");
-    String ipAddress = request.getRemoteAddr();
-    String browserType = request.getHeader("User-Agent");
+  //   System.out.println("intercepted normal");
+  //   HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
+  //   String jwt = request.getHeader("Authorization");
+  //   String ipAddress = request.getRemoteAddr();
+  //   String browserType = request.getHeader("User-Agent");
 
-    if (jwt == null) {
-      errorObject = ErrorMgrService.errorHandler("Invalid Parameters", Thread.currentThread().getStackTrace()[1]);
-      return new ResponseEntity<>(errorObject, HttpStatus.OK);
-    }
+  //   if (jwt == null) {
+  //     errorObject = ErrorMgrService.errorHandler("Invalid Parameters", Thread.currentThread().getStackTrace()[1]);
+  //     return new ResponseEntity<>(errorObject, HttpStatus.OK);
+  //   }
     
-    // Validate the JWT
-    boolean isValid = false;
-    isValid = authService.validateJwt(jwt, ipAddress, browserType);
+  //   // Validate the JWT
+  //   boolean isValid = false;
+  //   isValid = authService.validateJwt(jwt, ipAddress, browserType);
 
-    if (!isValid) {
-      errorObject = ErrorMgrService.errorHandler("Invalid token", Thread.currentThread().getStackTrace()[1]);
-      return new ResponseEntity<>(errorObject, HttpStatus.OK);   
-    } else {
-      return joinPoint.proceed();
-    }
-  }
+  //   if (!isValid) {
+  //     errorObject = ErrorMgrService.errorHandler("Invalid token", Thread.currentThread().getStackTrace()[1]);
+  //     return new ResponseEntity<>(errorObject, HttpStatus.OK);   
+  //   } else {
+  //     return joinPoint.proceed();
+  //   }
+  // }
 
   private String extractRequestBody(HttpServletRequest request) throws IOException {
     // Extract the request body from the request object

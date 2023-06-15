@@ -14,7 +14,7 @@ import org.springframework.http.HttpStatus;
 import java.util.List;
 import java.util.Map;
 
-@RequestMapping(("/admin"))
+@RequestMapping("/admin")
 @RestController
 public class AdminGetController {
 
