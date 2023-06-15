@@ -10,5 +10,6 @@ import com.tmsjsb.redpanda.Entity.PlanKeyEntity;
 public interface PlanRepository extends JpaRepository<PlanEntity, PlanKeyEntity> {
 
   List<PlanEntity> findByPlanappAcronym(String PlanappAcronym);
+  List<PlanEntity> findByPlanappAcronymAndPlanMVPname(String planappAcronym, String planMVPname);
 
 }
