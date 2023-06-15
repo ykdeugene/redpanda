@@ -10,5 +10,8 @@ public interface TaskService {
     //dummy api
     List<TaskEntity> getAllTask();
     Map<String,Object> createTask(Map<String,Object> body,String token);
+    Map<String,Object> demoteTask(Map<String,Object> body,String token);
+    Map<String,Object> promoteTask(Map<String,Object> body,String token);
+    Map<String,Object> updateTask(Map<String,Object> body,String token);
 
 }

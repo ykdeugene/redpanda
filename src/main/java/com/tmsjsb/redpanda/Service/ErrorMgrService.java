@@ -51,7 +51,9 @@ public class ErrorMgrService {
       errorCode.put("result", "BSJ375");
     } else if (throwable == "invalid fields") {
       errorCode.put("result", "BSJ372");
-    } else {
+    } else if (throwable == "Invalid action") {
+      errorCode.put("result", "BSJ-376");
+    }else {
       errorCode.put("result", "BSJ400");
     }
 

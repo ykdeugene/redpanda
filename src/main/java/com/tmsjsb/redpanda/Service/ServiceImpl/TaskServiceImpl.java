@@ -4,6 +4,8 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -50,7 +52,7 @@ public class TaskServiceImpl implements TaskService{
         Map<String,Object> jsonObject = new HashMap<>(0);
         try{
             TaskEntity task = new TaskEntity();
-                if((String) body.get("Task_app_Acronym") == null || (String) body.get("Task_plan") == null || (String) body.get("Task_name") == null)
+            if((String) body.get("Task_app_Acronym") == null || (String) body.get("Task_plan") == null || (String) body.get("Task_name") == null || !isValidParameter(body))
             {
                 jsonObject= ErrorMgrService.errorHandler("Invalid Parameters", Thread.currentThread().getStackTrace()[1]);
                 return jsonObject;
@@ -85,13 +87,13 @@ public class TaskServiceImpl implements TaskService{
             String notes = (String) body.get("Task_notes");
             if(notes != null && !notes.isEmpty())
             {
-                notes = "Notes: "+notes+"\n\n\n";
+                notes = "UserID: "+username+"\nState: Open\nDate/Time: "+dateTime+"\nNotes: "+notes+"\n\n\n";
             }
             else
             {
                 notes = "";
             }
-            task.setTask_notes(notes+"\n==============================\nUserID: "+username+"\nState: Open\nDate/Time: "+dateTime+"\n==============================");
+            task.setTask_notes(notes+"\n==============================\nTask Created\nUserID: "+username+"\nState: Open\nDate/Time: "+dateTime+"\n==============================");
             taskRepository.save(task);
             jsonObject.put("result", "true");
             return jsonObject;
@@ -100,8 +102,180 @@ public class TaskServiceImpl implements TaskService{
             jsonObject = ErrorMgrService.errorHandler("Internal Error", Thread.currentThread().getStackTrace()[1]);
             return jsonObject;
         }
+    }
 
-        
-    }   
+    @Override
+    public Map<String,Object> demoteTask(Map<String,Object> body, String token)
+    {
+        Map<String,Object> jsonObject = new HashMap<>(0);
+        try{
+            if((String) body.get("Task_id") == null || !isValidParameter(body))
+            {
+                jsonObject= ErrorMgrService.errorHandler("invalid fields", Thread.currentThread().getStackTrace()[1]);
+                return jsonObject;
+            }
+
+            token = token.split(" ")[1];
+            DecodedJWT decoded = JWT.decode(token);
+            String username = decoded.getClaim("username").asString();
+
+            //retrieve task and check state of task
+            TaskEntity task = taskRepository.findById((String) body.get("Task_id")).get();
+            if("Open".equals(task.getTask_state()) || "To_do".equals(task.getTask_state()) || "Close".equals(task.getTask_state()))
+            {
+                jsonObject= ErrorMgrService.errorHandler("Invalid action", Thread.currentThread().getStackTrace()[1]);
+                return jsonObject;
+            }
+
+            String[] states = new String[]{"Open","To_do","Doing","Done","Close"};
+            int index = Arrays.binarySearch(states,task.getTask_state());
+            task.setTask_state(states[index-1]);
+            task.setTask_owner(username);
+            if((String) body.get("Task_plan") != null)
+            {
+                task.setTask_plan((String) body.get("Task_plan"));
+            }
+
+            task.setTask_notes(addNotesWithAudit("Task Demoted",(String) body.get("Task_notes"),states,index,username));
+
+            return jsonObject;
+        }catch(Exception e)
+        {
+            jsonObject = ErrorMgrService.errorHandler("Internal Error", Thread.currentThread().getStackTrace()[1]);
+            return jsonObject;
+        }
+    }
+
+    @Override
+    public Map<String,Object> promoteTask(Map<String,Object> body, String token)
+    {
+        Map<String,Object> jsonObject = new HashMap<>(0);
+        try{
+            if((String) body.get("Task_id") == null || !isValidParameter(body))
+            {
+                jsonObject= ErrorMgrService.errorHandler("invalid fields", Thread.currentThread().getStackTrace()[1]);
+                return jsonObject;
+            }
+            
+            token = token.split(" ")[1];
+            DecodedJWT decoded = JWT.decode(token);
+            String username = decoded.getClaim("username").asString();
+
+            //retrieve task and application
+            if(!permitted(body,username))
+            {
+                jsonObject= ErrorMgrService.errorHandler("no access", Thread.currentThread().getStackTrace()[1]);
+                return jsonObject;
+            }
+            
+            return jsonObject;
+        }catch(Exception e)
+        {
+            jsonObject = ErrorMgrService.errorHandler("Internal Error", Thread.currentThread().getStackTrace()[1]);
+            return jsonObject;
+        }
+    }
+
+    @Override
+    public Map<String,Object> updateTask(Map<String,Object> body, String token)
+    {
+        Map<String,Object> jsonObject = new HashMap<>(0);
+        try{
+            if((String) body.get("Task_id") == null || !isValidParameter(body))
+            {
+                jsonObject= ErrorMgrService.errorHandler("invalid fields", Thread.currentThread().getStackTrace()[1]);
+                return jsonObject;
+            }
+
+            token = token.split(" ")[1];
+            DecodedJWT decoded = JWT.decode(token);
+            String username = decoded.getClaim("username").asString();
+
+            //retrieve task and application
+            if(!permitted(body,username))
+            {
+                jsonObject= ErrorMgrService.errorHandler("no access", Thread.currentThread().getStackTrace()[1]);
+                return jsonObject;
+            }
+            
+            return jsonObject;
+        }catch(Exception e)
+        {
+            jsonObject = ErrorMgrService.errorHandler("Internal Error", Thread.currentThread().getStackTrace()[1]);
+            return jsonObject;
+        }
+    }
+
+    private String addNotesWithAudit(String option,String notes, String[] states,int index, String username)
+    {
+        String dateTime = LocalDateTime.now(ZoneId.of("Asia/Singapore")).format(DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm:ss"));
+        System.out.println(index);
+        if(notes != null && !notes.isEmpty())
+        {
+            notes = "UserID: "+username+"\nState: Open\nDate/Time: "+dateTime+"\nNotes: "+notes+"\n\n\n";
+        }
+        else
+        {
+            notes = "";
+        }
+        notes = notes+"\n==============================\n + "+ option + " + \nUserID: "+username+"\nState: Open\nDate/Time: "+dateTime+"\n==============================";
+        return "";
+    }
+
+    private boolean permitted(Map<String,Object> body,String username)
+    {
+        TaskEntity task = taskRepository.findById((String) body.get("Task_id")).get();
+        AppEntity app = appRespository.findById(task.getTask_app_Acronym()).get();
+        switch(task.getTask_state())
+        {
+            case "Open":
+                if(username.equals(app.getApp_permit_Open()))
+                {
+                    return true;
+                }
+                break;
+            
+            case "To_do":
+                if(username.equals(app.getApp_permit_toDoList()))
+                {
+                    return true;
+                }
+                break;
+            
+            case "Doing":
+                if(username.equals(app.getApp_permit_Doing()))
+                {
+                    return true;
+                }
+                break;
+
+            case "Done":
+                if(username.equals(app.getApp_permit_Done()))
+                {
+                    return true;
+                }
+                break;
+            
+            default:
+                return false;
+        }
+        return false;
+    }
+    
+    private boolean isValidParameter(Map<String,Object> body)
+    {
+        for(Map.Entry<String,Object> entry : body.entrySet())
+        {
+            if(entry.getKey() == "Task_id")
+            {
+                continue;
+            }
+            if(!entry.getValue().toString().matches("^[a-zA-Z0-9]*$"))
+            {
+                return false;
+            }
+        }
+        return true;
+    }
     
 }

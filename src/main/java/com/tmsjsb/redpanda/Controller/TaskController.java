@@ -43,7 +43,8 @@ public class TaskController {
         Map<String,Object> jsonObject = new HashMap<>(0);
         if("demote".equals((String) requestBody.get("Option")))
         {
-            System.out.println("demote");
+            return ResponseEntity.ok().body(taskService.demoteTask(requestBody, token));
+            // System.out.println("demote");
         }
         else if("promote".equals((String) requestBody.get("Option")))
         {
