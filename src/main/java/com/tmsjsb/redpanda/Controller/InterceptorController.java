@@ -92,9 +92,7 @@ public class InterceptorController {
       } 
     }
   }
-  if(route.contains("get")){ 
-    System.out.println("Executing GET.");
-  } else if (route.contains("task")) {
+  if (route.contains("task") && !(route.contains("get"))) {
       // check taskid for app concat -> task permits (task_state permit)
     if (taskid.equals(null)){
       // create permit
@@ -102,16 +100,17 @@ public class InterceptorController {
       // other permits
     isAuth = true; // tempoary
       System.out.println("Executing in TaskController");
-  } else if (route.contains("app")) {
+  } else if (route.contains("app") && !(route.contains("get"))) {
     isAuth = authService.CheckGroup(username, "Project Lead");
       System.out.println("Executing in AppController");
-  } else if (route.contains("plan")) {
+  } else if (route.contains("plan") && !(route.contains("get"))) {
     isAuth = authService.CheckGroup(username, "Project Manager");
       System.out.println("Executing in PlanController");
   } else if (route.contains("admin")){
     isAuth = authService.CheckGroup(username, "admin");
       System.out.println("Executing in Admin");
   }
+  else isAuth = true;
 
     if (!isAuth) {
       errorObject = ErrorMgrService.errorHandler("no access", Thread.currentThread().getStackTrace()[1]);
