@@ -4,11 +4,14 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.tmsjsb.redpanda.Entity.AppEntity;
 import com.tmsjsb.redpanda.Entity.PlanEntity;
+import com.tmsjsb.redpanda.Repository.AppRepository;
 import com.tmsjsb.redpanda.Repository.PlanRepository;
 import com.tmsjsb.redpanda.Service.ErrorMgrService;
 import com.tmsjsb.redpanda.Service.PlanService;
@@ -18,9 +21,12 @@ public class PlanServiceImpl implements PlanService {
 
   private final PlanRepository planRepository;
 
+  private final AppRepository appRepository;
+
   @Autowired
-  private PlanServiceImpl(PlanRepository planRepository) {
+  private PlanServiceImpl(PlanRepository planRepository, AppRepository appRepository) {
     this.planRepository = planRepository;
+    this.appRepository = appRepository;
   }
 
   @Override
@@ -55,12 +61,18 @@ public class PlanServiceImpl implements PlanService {
       jsonObject = ErrorMgrService.errorHandler("data exists", Thread.currentThread().getStackTrace()[1]);
     } else {
       // check if app acronym exists first
-      try {
-        planRepository.save(plan);
-        jsonObject.put("result", "true");
-      } catch (Exception e) {
-        jsonObject = ErrorMgrService.errorHandler(e, Thread.currentThread().getStackTrace()[1]);
+      Optional<AppEntity> checkIfAppExist = appRepository.findById(plan.getPlanappAcronym());
+      if (checkIfAppExist.isPresent()) {
+        try {
+          planRepository.save(plan);
+          jsonObject.put("result", "true");
+        } catch (Exception e) {
+          jsonObject = ErrorMgrService.errorHandler(e, Thread.currentThread().getStackTrace()[1]);
+        }
+      } else {
+        jsonObject = ErrorMgrService.errorHandler("data not found", Thread.currentThread().getStackTrace()[1]);
       }
+
     }
     return jsonObject;
   }
