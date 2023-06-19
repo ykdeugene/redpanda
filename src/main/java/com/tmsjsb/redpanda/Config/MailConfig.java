@@ -1,4 +1,4 @@
-package com.tmsjsb.redpanda;
+package com.tmsjsb.redpanda.Config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
