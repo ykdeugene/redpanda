@@ -1,14 +1,13 @@
 package com.tmsjsb.redpanda.Controller;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.tmsjsb.redpanda.Entity.AppEntity;
+import com.tmsjsb.redpanda.Repository.AppRepository;
 import com.tmsjsb.redpanda.Service.AuthService;
 import com.tmsjsb.redpanda.Service.ErrorMgrService;
 
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.stream.Collectors;
+import java.util.Optional;
 
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
@@ -27,9 +26,12 @@ import jakarta.servlet.http.HttpServletRequest;
 public class InterceptorController {
 
   private final AuthService authService;
+  private AppRepository appRespository;
 
-  public InterceptorController(AuthService authService) {
+  public InterceptorController(AuthService authService, AppRepository appRespository) {
     this.authService = authService;
+
+    this.appRespository = appRespository;
   }
 
 
@@ -64,7 +66,6 @@ public class InterceptorController {
     Object body = args[0];
     System.out.println("Request Body Object: " + body);
 
-    String password = null; //for testing
     String taskstate = null;
     String taskid = null;
     String taskappacronym = null;
@@ -78,10 +79,7 @@ public class InterceptorController {
       Object key = entry.getKey();
       Object value = entry.getValue();
 
-      if ("password".equals(key)) {
-        password = value.toString();
-        //System.out.println("Password: " + password);
-      } else if ("Task_state".equals(key)) {
+      if ("Task_state".equals(key)) {
         taskstate = value.toString();
       } else if ("Task_id".equals(key)) {
         taskid = value.toString();
@@ -93,12 +91,34 @@ public class InterceptorController {
     }
   }
   if (route.contains("task") && !(route.contains("get"))) {
+    Optional<AppEntity> app = appRespository.findById(taskappacronym);
+    AppEntity thisapp = app.get();
       // check taskid for app concat -> task permits (task_state permit)
     if (taskid.equals(null)){
       // create permit
+      permit = thisapp.getApp_permit_Create();  
     }
-      // other permits
-    isAuth = true; // tempoary
+    // other permits
+    else{
+      switch(taskstate){
+        case "Open":
+        permit = thisapp.getApp_permit_Open(); 
+        break;
+        case "To_do":
+        permit = thisapp.getApp_permit_toDoList(); 
+        break;
+        case "Doing":
+        permit = thisapp.getApp_permit_Doing(); 
+        break;
+        case "Done":
+        permit = thisapp.getApp_permit_Done();
+        break; 
+        default:
+        //some error on taskstate
+      }
+    }  
+    isAuth = authService.CheckGroup(username, permit);
+    //isAuth = true; // tempoary
       System.out.println("Executing in TaskController");
   } else if (route.contains("app") && !(route.contains("get"))) {
     isAuth = authService.CheckGroup(username, "Project Lead");
@@ -120,46 +140,5 @@ public class InterceptorController {
       // Return false or any other response indicating invalid authentication 
       return joinPointAdmin.proceed();
     }
-  }
-
-  // @Pointcut("execution(* com.tmsjsb.redpanda.Controller..*(..)) && !execution(* com.tmsjsb.redpanda.Controller.AuthController.AuthLogin(..)) && !execution(* com.tmsjsb.redpanda.Controller.AdminController..*(..))")
-  // public void interceptedMethods() {}
-  
-  // @Around("interceptedMethods()")
-  // public Object interceptedMethods(ProceedingJoinPoint joinPoint) throws Throwable {
-  //   Map<String, Object> errorObject = new HashMap<>();
-  //   // Check if the request has a JWT in the header
-
-  //   System.out.println("intercepted normal");
-  //   HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
-  //   String jwt = request.getHeader("Authorization");
-  //   String ipAddress = request.getRemoteAddr();
-  //   String browserType = request.getHeader("User-Agent");
-
-  //   if (jwt == null) {
-  //     errorObject = ErrorMgrService.errorHandler("Invalid Parameters", Thread.currentThread().getStackTrace()[1]);
-  //     return new ResponseEntity<>(errorObject, HttpStatus.OK);
-  //   }
-    
-  //   // Validate the JWT
-  //   boolean isValid = false;
-  //   isValid = authService.validateJwt(jwt, ipAddress, browserType);
-
-  //   if (!isValid) {
-  //     errorObject = ErrorMgrService.errorHandler("Invalid token", Thread.currentThread().getStackTrace()[1]);
-  //     return new ResponseEntity<>(errorObject, HttpStatus.OK);   
-  //   } else {
-  //     return joinPoint.proceed();
-  //   }
-  // }
-
-  private String extractRequestBody(HttpServletRequest request) throws IOException {
-    // Extract the request body from the request object
-    // Implement the logic to read the request body based on your specific requirements
-    // For example, you can use a library like Jackson or Gson to deserialize the request body into an object
-    // In this example, let's assume you are extracting the request body as a String
-    // Adapt this method based on your use case
-    // Here, we are simply returning the request body as a String
-    return request.getReader().lines().collect(Collectors.joining(System.lineSeparator()));
   }
 }
