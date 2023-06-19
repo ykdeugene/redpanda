@@ -1,7 +1,9 @@
 package com.tmsjsb.redpanda.Controller;
 
 import com.tmsjsb.redpanda.Entity.AppEntity;
+import com.tmsjsb.redpanda.Entity.TaskEntity;
 import com.tmsjsb.redpanda.Repository.AppRepository;
+import com.tmsjsb.redpanda.Repository.TaskRepository;
 import com.tmsjsb.redpanda.Service.AuthService;
 import com.tmsjsb.redpanda.Service.ErrorMgrService;
 
@@ -26,11 +28,12 @@ import jakarta.servlet.http.HttpServletRequest;
 public class InterceptorController {
 
   private final AuthService authService;
+  private TaskRepository taskRepository;
   private AppRepository appRespository;
 
-  public InterceptorController(AuthService authService, AppRepository appRespository) {
+  public InterceptorController(AuthService authService, AppRepository appRespository, TaskRepository taskRepository) {
     this.authService = authService;
-
+    this.taskRepository = taskRepository;
     this.appRespository = appRespository;
   }
 
@@ -79,10 +82,9 @@ public class InterceptorController {
       Object key = entry.getKey();
       Object value = entry.getValue();
 
-      if ("Task_state".equals(key)) {
-        taskstate = value.toString();
-      } else if ("Task_id".equals(key)) {
+      if ("Task_id".equals(key)) {
         taskid = value.toString();
+        //System.out.println("split: " + taskid.split("_")[0]);
         taskappacronym = taskid.split("_")[0];
         //System.out.println("taskid: " + taskid);
       } else if ("Task_app_Acronym".equals(key)) {
@@ -101,6 +103,9 @@ public class InterceptorController {
     }
     // other permits
     else{
+      Optional<TaskEntity> task = taskRepository.findById(taskid);
+      TaskEntity thistask = task.get();
+      taskstate = thistask.getTask_state();
       switch(taskstate){
         case "Open":
         permit = thisapp.getApp_permit_Open(); 
