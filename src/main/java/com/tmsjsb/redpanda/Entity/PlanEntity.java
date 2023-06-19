@@ -45,7 +45,7 @@ public class PlanEntity {
   @Column(name = "plan_colour")
   @JsonProperty("Plan_colour")
   @NotBlank
-  @Pattern(regexp = "^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$")
+  @Pattern(regexp = "^#([A-Fa-f0-9]{6})$")
   private String plancolour;
 
 }

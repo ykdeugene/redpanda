@@ -54,6 +54,7 @@ public class PlanServiceImpl implements PlanService {
     if (!checkIfPlanExist.isEmpty()) {
       jsonObject = ErrorMgrService.errorHandler("data exists", Thread.currentThread().getStackTrace()[1]);
     } else {
+      // check if app acronym exists first
       try {
         planRepository.save(plan);
         jsonObject.put("result", "true");
