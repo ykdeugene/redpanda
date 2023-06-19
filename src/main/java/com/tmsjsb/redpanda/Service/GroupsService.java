@@ -19,5 +19,7 @@ public interface GroupsService {
   void removeGroup(GroupsEntity oldGroup);
 
   Object getGroup(String token);
+  
+  List<GroupsEntity> getGroupList();
 
 }

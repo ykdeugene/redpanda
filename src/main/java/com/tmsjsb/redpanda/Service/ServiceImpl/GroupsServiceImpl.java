@@ -12,6 +12,7 @@ import com.tmsjsb.redpanda.Repository.GroupsRepository;
 import com.tmsjsb.redpanda.Service.ErrorMgrService;
 import com.tmsjsb.redpanda.Service.GroupsService;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -107,6 +108,13 @@ public class GroupsServiceImpl implements GroupsService {
       return jsonObject;
     }
 
+  }
+
+  @Override
+  public List<GroupsEntity> getGroupList() {
+    List<GroupsEntity> groups = groupsRepository.findByUsername("");
+
+    return groups;
   }
 
 }
