@@ -1,11 +1,16 @@
 package com.tmsjsb.redpanda.Controller;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.BindingResult;
+import org.springframework.validation.FieldError;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -13,6 +18,8 @@ import org.springframework.web.bind.annotation.RestController;
 import com.tmsjsb.redpanda.Entity.PlanEntity;
 import com.tmsjsb.redpanda.Service.ErrorMgrService;
 import com.tmsjsb.redpanda.Service.PlanService;
+
+import jakarta.validation.Valid;
 
 @RestController
 public class PlanController {
@@ -29,19 +36,29 @@ public class PlanController {
 
     Map<String, Object> jsonObject = new HashMap<>();
 
-    try {
-      List<Map<String, Object>> plans = planService.getPlan(plan.getPlanappAcronym());
-      return ResponseEntity.ok().body(plans);
-    } catch (Exception e) {
-      jsonObject = ErrorMgrService.errorHandler(e, Thread.currentThread().getStackTrace()[1]);
+    if (plan.getPlanappAcronym() == null || plan.getPlanappAcronym().isBlank()) {
+      jsonObject = ErrorMgrService.errorHandler("invalid fields", Thread.currentThread().getStackTrace()[1]);
+    } else {
+      try {
+        List<Map<String, Object>> plans = planService.getPlan(plan.getPlanappAcronym());
+        return ResponseEntity.ok().body(plans);
+      } catch (Exception e) {
+        jsonObject = ErrorMgrService.errorHandler(e, Thread.currentThread().getStackTrace()[1]);
+      }
     }
     return ResponseEntity.ok(jsonObject);
   }
 
+  @Validated
   @PostMapping("/plan/create")
-  public ResponseEntity<?> createNewPlan(@RequestBody PlanEntity plan) {
+  public ResponseEntity<?> createNewPlan(@Valid @RequestBody PlanEntity plan, BindingResult bindingResult) {
 
     Map<String, Object> jsonObject = new HashMap<>();
+
+    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+
+    LocalDate startDate = LocalDate.parse(plan.getPlanstartDate(), formatter);
+    LocalDate endDate = LocalDate.parse(plan.getPlanendDate(), formatter);
 
     // System.out.println(plan.getPlanMVPname());
     // System.out.println(plan.getPlanappAcronym());
@@ -49,18 +66,13 @@ public class PlanController {
     // System.out.println(plan.getPlanendDate());
     // System.out.println(plan.getPlancolour());
 
-    // if empty fields, throw error
-    if (plan.getPlanMVPname() == null || plan.getPlanappAcronym() == null
-        || plan.getPlanstartDate() == null
-        || plan.getPlanendDate() == null || plan.getPlancolour() == null) {
+    if (bindingResult.hasErrors()) {
       jsonObject = ErrorMgrService.errorHandler("invalid fields", Thread.currentThread().getStackTrace()[1]);
-    } else if (plan.getPlanMVPname().isBlank() || plan.getPlanappAcronym().isBlank()
-        || plan.getPlanstartDate().isBlank()
-        || plan.getPlanendDate().isBlank() || plan.getPlancolour().isBlank()) {
+      List<FieldError> errors = bindingResult.getFieldErrors();
+      System.out.println(errors);
+    } else if (!startDate.isBefore(endDate)) {
       jsonObject = ErrorMgrService.errorHandler("invalid fields", Thread.currentThread().getStackTrace()[1]);
-    } //
-    // else if checkgroup here. if pass then run else below.
-    else {
+    } else {
       // else run service to save into db.
       try {
         Map<String, Object> result = planService.createPlan(plan);
@@ -73,23 +85,23 @@ public class PlanController {
     return ResponseEntity.ok(jsonObject);
   }
 
+  @Validated
   @PostMapping("/plan/update")
-  public ResponseEntity<?> updatePlan(@RequestBody PlanEntity plan) {
+  public ResponseEntity<?> updatePlan(@Valid @RequestBody PlanEntity plan, BindingResult bindingResult) {
 
     Map<String, Object> jsonObject = new HashMap<>();
 
+    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+
+    LocalDate startDate = LocalDate.parse(plan.getPlanstartDate(), formatter);
+    LocalDate endDate = LocalDate.parse(plan.getPlanendDate(), formatter);
+
     // if empty fields, throw error
-    if (plan.getPlanMVPname() == null || plan.getPlanappAcronym() == null
-        || plan.getPlanstartDate() == null
-        || plan.getPlanendDate() == null || plan.getPlancolour() == null) {
+    if (bindingResult.hasErrors()) {
       jsonObject = ErrorMgrService.errorHandler("invalid fields", Thread.currentThread().getStackTrace()[1]);
-    } else if (plan.getPlanMVPname().isBlank() || plan.getPlanappAcronym().isBlank()
-        || plan.getPlanstartDate().isBlank()
-        || plan.getPlanendDate().isBlank() || plan.getPlancolour().isBlank()) {
+    } else if (!startDate.isBefore(endDate)) {
       jsonObject = ErrorMgrService.errorHandler("invalid fields", Thread.currentThread().getStackTrace()[1]);
-    } //
-    // else if checkgroup here. if pass then run else below.
-    else {
+    } else {
       // else run service to save into db.
       try {
         Map<String, Object> result = planService.updatePlan(plan);

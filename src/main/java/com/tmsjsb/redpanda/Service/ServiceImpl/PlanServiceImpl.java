@@ -68,7 +68,7 @@ public class PlanServiceImpl implements PlanService {
   public Map<String, Object> updatePlan(PlanEntity plan) {
     Map<String, Object> jsonObject = new HashMap<>(0);
 
-    // see if it exists in db first 
+    // see if it exists in db first
     List<PlanEntity> checkIfPlanExist = planRepository.findByPlanappAcronymAndPlanMVPname(plan.getPlanappAcronym(),
         plan.getPlanMVPname());
     if (checkIfPlanExist.isEmpty()) {

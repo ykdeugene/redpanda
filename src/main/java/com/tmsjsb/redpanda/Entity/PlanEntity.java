@@ -6,6 +6,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 
 @Getter
 @Setter
@@ -19,6 +20,8 @@ public class PlanEntity {
   @Id
   @Column(name = "plan_mvp_name")
   @JsonProperty("Plan_MVP_name")
+  @NotBlank
+  @Pattern(regexp = "^[a-zA-Z0-9 ]*$")
   private String planMVPname;
 
   @Id
@@ -29,14 +32,20 @@ public class PlanEntity {
 
   @Column(name = "plan_startdate")
   @JsonProperty("Plan_startDate")
-  private String PlanstartDate;
+  @NotBlank
+  @Pattern(regexp = "^\\d{4}-\\d{2}-\\d{2}$")
+  private String planstartDate;
 
   @Column(name = "plan_enddate")
   @JsonProperty("Plan_endDate")
-  private String PlanendDate;
+  @NotBlank
+  @Pattern(regexp = "^\\d{4}-\\d{2}-\\d{2}$")
+  private String planendDate;
 
   @Column(name = "plan_colour")
   @JsonProperty("Plan_colour")
-  private String Plancolour;
+  @NotBlank
+  @Pattern(regexp = "^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$")
+  private String plancolour;
 
 }
