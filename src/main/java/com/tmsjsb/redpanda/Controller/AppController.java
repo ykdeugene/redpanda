@@ -1,5 +1,7 @@
 package com.tmsjsb.redpanda.Controller;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -60,6 +62,27 @@ public class AppController {
       jsonObject = ErrorMgrService.errorHandler("invalid fields", Thread.currentThread().getStackTrace()[1]);
     }
 
+    return ResponseEntity.ok().body(jsonObject);
+  }
+
+  @PostMapping("/update")
+  public ResponseEntity<Map<String, Object>> updateapp(@RequestBody AppEntity app) {
+    Map<String, Object> jsonObject = new HashMap<>();
+
+    // add validators
+    //DateTimeFormatter dateformat = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+    //LocalDate startDate = LocalDate.parse(app.getApp_startDate(), dateformat);
+    //LocalDate endDate = LocalDate.parse(app.getApp_endDate(), dateformat);
+
+    Pattern asciiPattern = Pattern.compile("\\A\\p{ASCII}*\\z");
+    Matcher descriptionMatcher = asciiPattern.matcher(app.getApp_Description());
+    Boolean validateDescription = descriptionMatcher.matches();
+
+    if (!validateDescription) {
+      jsonObject = ErrorMgrService.errorHandler("invalid fields", Thread.currentThread().getStackTrace()[1]);
+    } else {
+    jsonObject = appService.updateApp(app.getApp_Acronym(), app.getApp_Description(), app.getApp_startDate(), app.getApp_endDate(), app.getApp_permit_Create(), app.getApp_permit_Open(), app.getApp_permit_toDoList(), app.getApp_permit_Doing(), app.getApp_permit_Done());
+    }
     return ResponseEntity.ok().body(jsonObject);
   }
 }
