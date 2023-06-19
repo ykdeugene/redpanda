@@ -24,20 +24,19 @@ public class TaskController {
         this.taskService = taskService;
     }
 
-    //dummy api
-    @GetMapping("/getAllTask")
-    public ResponseEntity<?> getAllTask()
+    @PostMapping("/get")
+    public ResponseEntity<?> getAllTask(@RequestBody Map<String, Object> requestBody)
     {
-        return ResponseEntity.ok().body(taskService.getAllTask());
+        return ResponseEntity.ok().body(taskService.getAllTask(requestBody));
     }
 
-    @PostMapping("/createTask")
+    @PostMapping("/create")
     public ResponseEntity<?> createTask(@RequestHeader(value = "authorization", required = false) String token,@RequestBody Map<String, Object> requestBody)
     {
         return ResponseEntity.ok().body(taskService.createTask(requestBody,token));
     }
 
-    @PostMapping("/updateTask")
+    @PostMapping("/update")
     public ResponseEntity<?> updateTask(@RequestHeader(value = "authorization", required = false) String token,@RequestBody Map<String, Object> requestBody)
     {
         Map<String,Object> jsonObject = new HashMap<>(0);

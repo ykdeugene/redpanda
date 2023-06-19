@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -38,11 +39,20 @@ public class TaskServiceImpl implements TaskService{
         this.appRespository = appRespository;
     }
 
-    //dummy api
     @Override
-    public List<TaskEntity> getAllTask()
+    public Map<String,Object> getAllTask(Map<String,Object> body)
     {
-        return taskRepository.findAll();
+        Map<String,Object> jsonObject = new HashMap<>(0);
+        if((String) body.get("Task_app_Acronym") == null)
+        {
+            jsonObject= ErrorMgrService.errorHandler("Invalid Parameters", Thread.currentThread().getStackTrace()[1]);
+            return jsonObject;
+        }
+        List<TaskEntity> task = taskRepository.findByTaskappAcronym((String) body.get("Task_app_Acronym"));
+        Map<String, Object> entityMap = task.stream()
+            .collect(Collectors.toMap(TaskEntity::getTask_id, entity -> entity));
+
+        return entityMap;
     }
 
     @Override
@@ -75,7 +85,7 @@ public class TaskServiceImpl implements TaskService{
             task.setTask_name((String) body.get("Task_name"));
             task.setTask_description((String) body.get("Task_description"));
             task.setTask_plan((String) body.get("Task_plan"));
-            task.setTask_app_Acronym((String) body.get("Task_app_Acronym"));
+            task.setTaskappAcronym((String) body.get("Task_app_Acronym"));
             task.setTask_state("Open");
 
             //getting Date and Time
@@ -200,7 +210,7 @@ public class TaskServiceImpl implements TaskService{
     private boolean permitted(Map<String,Object> body,String username)
     {
         TaskEntity task = taskRepository.findById((String) body.get("Task_id")).get();
-        AppEntity app = appRespository.findById(task.getTask_app_Acronym()).get();
+        AppEntity app = appRespository.findById(task.getTaskappAcronym()).get();
         switch(task.getTask_state())
         {
             case "Open":
@@ -245,7 +255,7 @@ public class TaskServiceImpl implements TaskService{
             {
                 continue;
             }
-            if(!entry.getValue().toString().matches("^[a-zA-Z0-9]*$"))
+            if(!entry.getValue().toString().matches("^[a-zA-Z0-9 ]*$"))
             {
                 return false;
             }

@@ -63,7 +63,8 @@ public class InterceptorController {
   
     String route = request.getRequestURI();
     Object[] args = joinPointAdmin.getArgs();
-    Object body = args[0];
+    System.out.println(args.length);
+    Object body = args[args.length-1];
     System.out.println("Request Body Object: " + body);
 
     String taskstate = null;
@@ -71,7 +72,6 @@ public class InterceptorController {
     String taskappacronym = null;
     String permit = null;
 
-    //System.out.println("Route: " + route);
     if (body instanceof Map) {
       Map<?, ?> requestBody = (Map<?, ?>) body;
 
@@ -91,10 +91,11 @@ public class InterceptorController {
     }
   }
   if (route.contains("task") && !(route.contains("get"))) {
+    System.out.println("app: " + taskappacronym);
     Optional<AppEntity> app = appRespository.findById(taskappacronym);
     AppEntity thisapp = app.get();
       // check taskid for app concat -> task permits (task_state permit)
-    if (taskid.equals(null)){
+    if (taskid == null){
       // create permit
       permit = thisapp.getApp_permit_Create();  
     }
@@ -116,8 +117,9 @@ public class InterceptorController {
         default:
         //some error on taskstate
       }
-    }  
-    isAuth = authService.CheckGroup(username, permit);
+    }
+    if(permit == null) isAuth = false;
+    else isAuth = authService.CheckGroup(username, permit);
     //isAuth = true; // tempoary
       System.out.println("Executing in TaskController");
   } else if (route.contains("app") && !(route.contains("get"))) {

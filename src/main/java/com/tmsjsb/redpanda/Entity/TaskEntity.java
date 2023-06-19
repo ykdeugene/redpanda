@@ -33,7 +33,7 @@ public class TaskEntity {
 
     @JsonProperty("Task_app_Acronym")
     @Column(name = "task_app_acronym")
-    private String Task_app_Acronym;
+    private String taskappAcronym;
 
     @JsonProperty("Task_state")
     @Column(name = "task_state")
