@@ -16,7 +16,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.tmsjsb.redpanda.Entity.PlanEntity;
-import com.tmsjsb.redpanda.Service.EmailService;
 import com.tmsjsb.redpanda.Service.ErrorMgrService;
 import com.tmsjsb.redpanda.Service.PlanService;
 
@@ -26,12 +25,10 @@ import jakarta.validation.Valid;
 public class PlanController {
 
   private final PlanService planService;
-  private final EmailService emailService;
 
   @Autowired
-  public PlanController(PlanService planService, EmailService emailService) {
+  public PlanController(PlanService planService) {
     this.planService = planService;
-    this.emailService = emailService;
   }
 
   @PostMapping("/plan/get")
@@ -44,7 +41,6 @@ public class PlanController {
     } else {
       try {
         List<Map<String, Object>> plans = planService.getPlan(plan.getPlanappAcronym());
-        emailService.sendEmail("test@email.com", "hehe", "this is the content", "tms@gmail.com");
         return ResponseEntity.ok().body(plans);
       } catch (Exception e) {
         jsonObject = ErrorMgrService.errorHandler(e, Thread.currentThread().getStackTrace()[1]);
