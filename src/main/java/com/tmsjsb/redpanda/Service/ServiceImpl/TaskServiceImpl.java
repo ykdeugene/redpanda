@@ -18,11 +18,19 @@ import org.springframework.stereotype.Service;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.tmsjsb.redpanda.Entity.AppEntity;
+import com.tmsjsb.redpanda.Entity.GroupsEntity;
 import com.tmsjsb.redpanda.Entity.TaskEntity;
+import com.tmsjsb.redpanda.Entity.UserEntity;
 import com.tmsjsb.redpanda.Repository.AppRepository;
+import com.tmsjsb.redpanda.Repository.GroupsRepository;
 import com.tmsjsb.redpanda.Repository.TaskRepository;
+import com.tmsjsb.redpanda.Repository.UserRepository;
 import com.tmsjsb.redpanda.Service.ErrorMgrService;
 import com.tmsjsb.redpanda.Service.TaskService;
+
+import org.springframework.mail.SimpleMailMessage;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.stereotype.Service;
 
 import lombok.AllArgsConstructor;
 
@@ -31,12 +39,19 @@ public class TaskServiceImpl implements TaskService{
     
     private TaskRepository taskRepository;
     private AppRepository appRespository;
+    private GroupsRepository groupsRepository;
+    private UserRepository userRepository;
+
+    private final JavaMailSender mailSender;
 
     @Autowired
-    private TaskServiceImpl(TaskRepository taskRepository, AppRepository appRespository)
+    private TaskServiceImpl(TaskRepository taskRepository, AppRepository appRespository,GroupsRepository groupsRepository,UserRepository userRepository,JavaMailSender mailSender)
     {
         this.taskRepository = taskRepository;
         this.appRespository = appRespository;
+        this.userRepository = userRepository;
+        this.groupsRepository = groupsRepository;
+        this.mailSender = mailSender;
     }
 
     //dummy api
@@ -127,17 +142,18 @@ public class TaskServiceImpl implements TaskService{
                 return jsonObject;
             }
 
-            String[] states = new String[]{"Open","To_do","Doing","Done","Close"};
-            int index = Arrays.binarySearch(states,task.getTask_state());
-            task.setTask_state(states[index-1]);
+            ArrayList<String> states = new ArrayList<>(Arrays.asList("Open", "To_do", "Doing", "Done", "Close"));
+            int index = states.indexOf(task.getTask_state());
+            task.setTask_state(states.get(index-1));
             task.setTask_owner(username);
             if((String) body.get("Task_plan") != null)
             {
                 task.setTask_plan((String) body.get("Task_plan"));
             }
 
-            task.setTask_notes(addNotesWithAudit("Task Demoted",(String) body.get("Task_notes"),states,index,username));
-
+            task.setTask_notes(addNotesWithAudit("Task Demoted",task.getTask_notes(),(String) body.get("Task_notes"),states,index,username));
+            taskRepository.save(task);
+            jsonObject.put("result", "true");
             return jsonObject;
         }catch(Exception e)
         {
@@ -156,18 +172,53 @@ public class TaskServiceImpl implements TaskService{
                 jsonObject= ErrorMgrService.errorHandler("invalid fields", Thread.currentThread().getStackTrace()[1]);
                 return jsonObject;
             }
-            
+
             token = token.split(" ")[1];
             DecodedJWT decoded = JWT.decode(token);
             String username = decoded.getClaim("username").asString();
 
-            //retrieve task and application
-            if(!permitted(body,username))
+            //retrieve task and check state of task
+            TaskEntity task = taskRepository.findById((String) body.get("Task_id")).get();
+            if("Close".equals(task.getTask_state()))
             {
-                jsonObject= ErrorMgrService.errorHandler("no access", Thread.currentThread().getStackTrace()[1]);
+                jsonObject= ErrorMgrService.errorHandler("Invalid action", Thread.currentThread().getStackTrace()[1]);
                 return jsonObject;
             }
+
+            ArrayList<String> states = new ArrayList<>(Arrays.asList("Open", "To_do", "Doing", "Done", "Close"));
+            int index = states.indexOf(task.getTask_state());
+            task.setTask_state(states.get(index+1));
+            task.setTask_owner(username);
+            if((String) body.get("Task_plan") != null)
+            {
+                task.setTask_plan((String) body.get("Task_plan"));
+            }
+
+            task.setTask_notes(addNotesWithAudit("Task Promoted",task.getTask_notes(),(String) body.get("Task_notes"),states,index,username));
+            taskRepository.save(task);
+
+            //sending email
+            if(states.get(index+1).equals("Done"))
+            {
+                AppEntity app = appRespository.findById(task.getTask_app_Acronym()).get();
+                List<GroupsEntity> groups = groupsRepository.findByGroupName(app.getApp_permit_Done());
+                
+                //ArrayList<String> emailList = new ArrayList<>();
+                SimpleMailMessage message = new SimpleMailMessage();
+                message.setSubject(task.getTask_id() + " is ready for approval");
+                message.setText(task.getTask_id() + " is ready for approval");
+                for(int i = 0; i < groups.size();i++)
+                {
+                    UserEntity user = userRepository.findById(groups.get(i).getUsername()).get();
+                    message.setTo(user.getEmail());
+                    mailSender.send(message);
+                    System.out.println("Email sent to : "+user.getEmail());
+                    //emailList.add(user.getEmail());
+                }
+                
+            }
             
+            jsonObject.put("result", "true");
             return jsonObject;
         }catch(Exception e)
         {
@@ -191,12 +242,19 @@ public class TaskServiceImpl implements TaskService{
             DecodedJWT decoded = JWT.decode(token);
             String username = decoded.getClaim("username").asString();
 
-            //retrieve task and application
-            if(!permitted(body,username))
+            //retrieve task and check state of task
+            TaskEntity task = taskRepository.findById((String) body.get("Task_id")).get();
+            ArrayList<String> states = new ArrayList<>(Arrays.asList("Open", "To_do", "Doing", "Done", "Close"));
+            int index = states.indexOf(task.getTask_state());
+
+            task.setTask_owner(username);
+            if((String) body.get("Task_plan") != null)
             {
-                jsonObject= ErrorMgrService.errorHandler("no access", Thread.currentThread().getStackTrace()[1]);
-                return jsonObject;
+                task.setTask_plan((String) body.get("Task_plan"));
             }
+            task.setTask_notes(addNotesWithAudit("Task Updated",task.getTask_notes(),(String) body.get("Task_notes"),states,index,username));
+            taskRepository.save(task);
+            jsonObject.put("result", "true");
             
             return jsonObject;
         }catch(Exception e)
@@ -206,20 +264,32 @@ public class TaskServiceImpl implements TaskService{
         }
     }
 
-    private String addNotesWithAudit(String option,String notes, String[] states,int index, String username)
+    private String addNotesWithAudit(String option,String previous_notes,String notes, ArrayList<String> states,int index, String username)
     {
         String dateTime = LocalDateTime.now(ZoneId.of("Asia/Singapore")).format(DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm:ss"));
-        System.out.println(index);
+        //System.out.println(index);
         if(notes != null && !notes.isEmpty())
         {
-            notes = "UserID: "+username+"\nState: Open\nDate/Time: "+dateTime+"\nNotes: "+notes+"\n\n\n";
+            notes = "\nNotes: "+notes+"\n\n\n";
         }
         else
         {
             notes = "";
         }
-        notes = notes+"\n==============================\n + "+ option + " + \nUserID: "+username+"\nState: Open\nDate/Time: "+dateTime+"\n==============================";
-        return "";
+        String state_note = "";
+        if(option.equals("Task Demoted"))
+        {
+            state_note = " from " + states.get(index) + " to " + states.get(index-1);
+        }
+        else if(option.equals("Task Promoted")){
+            state_note = " from " + states.get(index) + " to " + states.get(index+1);
+        }
+
+        notes = notes+"\n\n"+ option + state_note+ "\nUserID: "+ username +"\nState: " + states.get(index) +"\nDate/Time: "+dateTime+"\n==============================\n" + previous_notes;
+        // System.out.println("|||||||");
+        // System.out.println(notes);
+        // System.out.println("|||||||");
+        return notes;
     }
 
     private boolean permitted(Map<String,Object> body,String username)
@@ -270,7 +340,7 @@ public class TaskServiceImpl implements TaskService{
             {
                 continue;
             }
-            if(!entry.getValue().toString().matches("^[a-zA-Z0-9]*$"))
+            if(!entry.getValue().toString().matches("^[a-zA-Z0-9 ]*$"))
             {
                 return false;
             }
