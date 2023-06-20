@@ -32,6 +32,16 @@ import com.tmsjsb.redpanda.Repository.UserRepository;
 import com.tmsjsb.redpanda.Service.ErrorMgrService;
 import com.tmsjsb.redpanda.Service.TaskService;
 
+import jakarta.mail.internet.MimeMessage;
+
+import org.springframework.mail.SimpleMailMessage;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMailMessage;
+import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.stereotype.Service;
+
+import lombok.AllArgsConstructor;
+
 @Service
 public class TaskServiceImpl implements TaskService {
 
@@ -195,26 +205,28 @@ public class TaskServiceImpl implements TaskService {
                 AppEntity app = appRespository.findById(task.getTaskappAcronym()).get();
                 List<GroupsEntity> groups = groupsRepository.findByGroupName(app.getApp_permit_Done());
 
-                // ArrayList<String> emailList = new ArrayList<>();
-                SimpleMailMessage message = new SimpleMailMessage();
-                message.setSubject(task.getTask_id() + " is ready for approval");
-                message.setText(task.getTask_id() + " is ready for approval");
+                List<String> email_list = new ArrayList<String>();
+                
+                MimeMessage email = mailSender.createMimeMessage();
+                MimeMessageHelper helper = new MimeMessageHelper(email, true);
+                helper.setSubject(task.getTask_id() + " is ready for approval");
+                helper.setText(task.getTask_id() + " is ready for approval");
+                helper.setFrom("tms@gmail.com");
+
                 for (int i = 0; i < groups.size(); i++) {
 
                     if (groups.get(i).getUsername().equals("")) {
                         continue;
                     }
-                    System.out.println(groups.get(i).getUsername());
                     UserEntity user = userRepository.findById(groups.get(i).getUsername()).get();
                     if (user.getEmail().equals("") || user.getEmail() == null) {
                         continue;
                     }
-                    message.setTo(user.getEmail());
-                    mailSender.send(message);
-                    System.out.println("Email sent to : " + user.getEmail());
-                    // emailList.add(user.getEmail());
+                    email_list.add(user.getEmail());
                 }
-
+                String[] emailList = email_list.toArray(new String[]{});
+                helper.setTo(emailList);
+                mailSender.send(email);
             }
 
             jsonObject.put("result", "true");
