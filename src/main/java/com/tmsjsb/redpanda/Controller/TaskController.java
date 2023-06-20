@@ -43,15 +43,14 @@ public class TaskController {
         if("demote".equals((String) requestBody.get("Option")))
         {
             return ResponseEntity.ok().body(taskService.demoteTask(requestBody, token));
-            // System.out.println("demote");
         }
         else if("promote".equals((String) requestBody.get("Option")))
         {
-            System.out.println("promote");
+            return ResponseEntity.ok().body(taskService.promoteTask(requestBody, token));
         }
         else if("update".equals((String) requestBody.get("Option")))
         {
-            System.out.println("promote");
+            return ResponseEntity.ok().body(taskService.updateTask(requestBody, token));
         }
         else{
             jsonObject = ErrorMgrService.errorHandler("Invalid Parameters", Thread.currentThread().getStackTrace()[1]);
