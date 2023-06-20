@@ -10,7 +10,7 @@ import com.tmsjsb.redpanda.Entity.GroupsEntity;
 public interface GroupsRepository extends JpaRepository<GroupsEntity, GroupKeyEntity> {
 
   List<GroupsEntity> findByUsername(String username);
-
+  List<GroupsEntity> findByGroupName(String groupName);
   boolean existsByGroupName(String groupname);
 
 }

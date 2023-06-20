@@ -60,8 +60,6 @@ public class AppServiceImpl implements AppService {
     String result = "true";
     Map<String, Object> jsonObject = new HashMap<>(0);
 
-    // insert validation logic here
-
     try {
       Optional<AppEntity> CheckApp = getAppById(App_Acronym);
 
@@ -69,6 +67,7 @@ public class AppServiceImpl implements AppService {
         jsonObject = ErrorMgrService.errorHandler("data exists", Thread.currentThread().getStackTrace()[1]);
         return jsonObject;
       }
+
       AppEntity newApp = new AppEntity();
       newApp.setApp_Acronym(App_Acronym);
       newApp.setApp_Description(App_Description);
@@ -83,9 +82,30 @@ public class AppServiceImpl implements AppService {
       appRepository.save(newApp);
     } catch (Exception e) {
       jsonObject = ErrorMgrService.errorHandler(e, Thread.currentThread().getStackTrace()[1]);
+      return jsonObject;
     }
 
     jsonObject.put("result", result);
+    return jsonObject;
+  }
+
+  public Map<String, Object> updateApp(String App_Acronym, String App_Description, String App_startDate, String App_endDate, String App_permit_Create, String App_permit_Open, String App_permit_toDoList, String App_permit_Doing, String App_permit_Done){
+    Map<String, Object> jsonObject = new HashMap<>(0);
+    Optional<AppEntity> CheckApp = getAppById(App_Acronym);
+
+    if (CheckApp.isPresent()) {
+      AppEntity thisApp = CheckApp.get();
+      thisApp.setApp_Description(App_Description);
+      thisApp.setApp_startDate(App_startDate);
+      thisApp.setApp_endDate(App_endDate);
+      thisApp.setApp_permit_Create(App_permit_Create);
+      thisApp.setApp_permit_Open(App_permit_Open);
+      thisApp.setApp_permit_toDoList(App_permit_toDoList);
+      thisApp.setApp_permit_Doing(App_permit_Doing);
+      thisApp.setApp_permit_Done(App_permit_Done);
+      appRepository.save(thisApp);
+    }
+    jsonObject.put("result", CheckApp.isPresent());
     return jsonObject;
   }
 }
