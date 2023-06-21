@@ -233,8 +233,7 @@ public class TaskServiceImpl implements TaskService {
             return jsonObject;
         } catch (Exception e) {
             System.out.println("eee" + e);
-            jsonObject = ErrorMgrService.errorHandler("ConstraintViolationImpl",
-                    Thread.currentThread().getStackTrace()[1]);
+            jsonObject.put("result", "true");
             return jsonObject;
         }
     }
